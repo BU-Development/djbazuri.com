@@ -4,11 +4,18 @@ import Image from 'next/image';
 export const dynamic = 'force-dynamic';
 
 export default async function LinksPage() {
-  const { data: links, error } = await supabase
-    .from('links')
-    .select('*')
-    .eq('visible', true)
-    .order('order', { ascending: true });
+  let links: any[] = [];
+
+  try {
+    const { data } = await supabase
+      .from('links')
+      .select('*')
+      .eq('visible', true)
+      .order('order', { ascending: true });
+    links = data || [];
+  } catch {
+    links = [];
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12">
