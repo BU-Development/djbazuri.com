@@ -1,41 +1,93 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  --primary: #856aad;
-  --dark: #000000;
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
+@theme {
+  --color-primary: #856aad;
+  --color-primary-50: #f5f3f7;
+  --color-primary-100: #ebe6ef;
+  --color-primary-200: #d7cde0;
+  --color-primary-300: #c3b4d0;
+  --color-primary-400: #9c82be;
+  --color-primary-500: #856aad;
+  --color-primary-600: #6d5591;
+  --color-primary-700: #574375;
+  --color-primary-800: #41325a;
+  --color-primary-900: #2b213e;
+  --color-dark: #000000;
+  --color-dark-50: #1a1a1a;
+  --color-dark-100: #0d0d0d;
+  --color-dark-200: #000000;
+  --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
+  --background-image-gradient-conic: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
+  color: white;
   background: #000000;
   min-height: 100vh;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.text-balance {
+  text-wrap: balance;
 }
 
-@layer components {
-  .btn-primary {
-    @apply px-6 py-3 bg-primary hover:bg-primary-600 text-white rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl;
-  }
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: #856aad;
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
 
-  .btn-secondary {
-    @apply px-6 py-3 bg-white text-primary hover:bg-gray-100 rounded-lg font-semibold transition-all duration-300 shadow-lg;
-  }
+.btn-primary:hover {
+  background-color: #6d5591;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+}
 
-  .card {
-    @apply bg-dark-50 rounded-xl p-6 shadow-xl border border-primary/20 transition-all duration-300 hover:border-primary/40;
-  }
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background-color: white;
+  color: #856aad;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
 
-  .input-field {
-    @apply w-full px-4 py-3 bg-dark-50 border border-primary/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all;
-  }
+.btn-secondary:hover {
+  background-color: #f3f4f6;
+}
+
+.card {
+  background-color: #1a1a1a;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  border: 1px solid rgb(133 106 173 / 0.2);
+  transition: all 0.3s;
+}
+
+.card:hover {
+  border-color: rgb(133 106 173 / 0.4);
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #1a1a1a;
+  border: 1px solid rgb(133 106 173 / 0.3);
+  border-radius: 0.5rem;
+  color: white;
+  transition: all 0.3s;
+}
+
+.input-field::placeholder {
+  color: #9ca3af;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #856aad;
+  box-shadow: 0 0 0 2px rgb(133 106 173 / 0.2);
 }

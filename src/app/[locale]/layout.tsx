@@ -3,6 +3,8 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 
+export const dynamic = 'force-dynamic';
+
 const locales = ['en', 'nl'];
 
 export function generateStaticParams() {

@@ -6,12 +6,15 @@ import TrackSearch from '@/components/TrackSearch';
 import TrackList from '@/components/TrackList';
 import Link from 'next/link';
 
-interface Track {
+interface SearchTrack {
   id: string;
   name: string;
   artists: string;
   album: string;
   albumImage: string | null;
+}
+
+interface Track extends SearchTrack {
   priority: 'must_have' | 'normal' | 'blacklist';
 }
 
@@ -38,7 +41,7 @@ export default function PlaylistPage({ params: { locale } }: { params: { locale:
     localStorage.setItem('playlist_tracks', JSON.stringify(tracks));
   }, [tracks]);
 
-  const handleAddTrack = (track: Track, priority: 'must_have' | 'normal' | 'blacklist') => {
+  const handleAddTrack = (track: SearchTrack, priority: 'must_have' | 'normal' | 'blacklist') => {
     const existingTrack = tracks.find((t) => t.id === track.id);
 
     if (existingTrack) {
