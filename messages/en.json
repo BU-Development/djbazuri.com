@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "home": "Home",
+    "gallery": "Gallery",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "login": "Login",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "hero": {
+      "title": "DJ Bazuri",
+      "subtitle": "Professional DJ for Your Event",
+      "description": "From weddings to corporate events, I create the perfect musical atmosphere for your occasion.",
+      "bookButton": "Book Now",
+      "contactButton": "Get In Touch"
+    },
+    "about": {
+      "title": "About DJ Bazuri",
+      "description": "With years of experience in the DJ industry, I provide professional entertainment for all types of events. My passion for music and reading the crowd ensures your party will be unforgettable."
+    },
+    "features": {
+      "title": "Why DJ Bazuri?",
+      "professional": {
+        "title": "Professional",
+        "description": "High-quality equipment and years of experience"
+      },
+      "playlist": {
+        "title": "Your Playlist",
+        "description": "Create your own playlist via Spotify integration"
+      },
+      "flexible": {
+        "title": "Flexible",
+        "description": "Tailored to your wishes and event"
+      }
+    }
+  },
+  "gallery": {
+    "title": "Gallery",
+    "subtitle": "Photos from previous events"
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Choose the package that fits your event",
+    "basic": {
+      "name": "Basic",
+      "price": "€350",
+      "duration": "4 hours",
+      "features": [
+        "Professional DJ equipment",
+        "Music of your choice",
+        "Basic lighting",
+        "Spotify playlist integration"
+      ],
+      "button": "Book Basic"
+    },
+    "premium": {
+      "name": "Premium",
+      "price": "€550",
+      "duration": "6 hours",
+      "features": [
+        "Everything from Basic package",
+        "Advanced lighting",
+        "Smoke machine",
+        "Microphone for announcements",
+        "Extra performance time"
+      ],
+      "button": "Book Premium"
+    },
+    "deluxe": {
+      "name": "Deluxe",
+      "price": "€750",
+      "duration": "8 hours",
+      "features": [
+        "Everything from Premium package",
+        "Complete sound and lighting system",
+        "DJ booth decoration",
+        "Special effects",
+        "Unlimited playlist requests"
+      ],
+      "button": "Book Deluxe"
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Get in touch for a booking or inquiry",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "message": "Message",
+    "eventDate": "Event Date",
+    "eventType": "Event Type",
+    "submit": "Send",
+    "success": "Thank you for your message! I'll get back to you as soon as possible.",
+    "error": "Something went wrong. Please try again later."
+  },
+  "auth": {
+    "signin": {
+      "title": "Sign In",
+      "email": "Email",
+      "password": "Password",
+      "button": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signup": "Sign Up",
+      "error": "Invalid credentials"
+    },
+    "signup": {
+      "title": "Sign Up",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "bookingReference": "Booking Reference",
+      "button": "Sign Up",
+      "hasAccount": "Already have an account?",
+      "signin": "Sign In",
+      "error": "Something went wrong during registration"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "booking": {
+      "title": "Your Booking",
+      "eventName": "Event",
+      "eventDate": "Date",
+      "status": "Status",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed"
+    },
+    "playlist": {
+      "title": "Create Your Playlist",
+      "button": "Go to Playlist",
+      "search": "Search for songs",
+      "searching": "Searching...",
+      "noResults": "No results found",
+      "mustHave": "Must-Have",
+      "normal": "Normal",
+      "blacklist": "Blacklist",
+      "addTo": "Add to",
+      "remove": "Remove",
+      "createPlaylist": "Create Spotify Playlist",
+      "syncChanges": "Sync Changes",
+      "playlistCreated": "Playlist created successfully!",
+      "playlistUpdated": "Playlist updated successfully!",
+      "viewOnSpotify": "View on Spotify"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}

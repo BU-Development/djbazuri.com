@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "home": "Home",
+    "gallery": "Galerij",
+    "pricing": "Prijzen",
+    "contact": "Contact",
+    "login": "Inloggen",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "hero": {
+      "title": "DJ Bazuri",
+      "subtitle": "Professionele DJ voor jouw evenement",
+      "description": "Van bruiloften tot bedrijfsfeesten, ik zorg voor de perfecte muzikale sfeer op jouw evenement.",
+      "bookButton": "Boek Nu",
+      "contactButton": "Neem Contact Op"
+    },
+    "about": {
+      "title": "Over DJ Bazuri",
+      "description": "Met jaren ervaring in de DJ-industrie lever ik professionele entertainment voor alle soorten evenementen. Mijn passie voor muziek en het lezen van het publiek zorgt ervoor dat jouw feest onvergetelijk wordt."
+    },
+    "features": {
+      "title": "Waarom DJ Bazuri?",
+      "professional": {
+        "title": "Professioneel",
+        "description": "Hoogwaardige apparatuur en jarenlange ervaring"
+      },
+      "playlist": {
+        "title": "Jouw Playlist",
+        "description": "Maak je eigen playlist via Spotify integratie"
+      },
+      "flexible": {
+        "title": "Flexibel",
+        "description": "Aangepast aan jouw wensen en evenement"
+      }
+    }
+  },
+  "gallery": {
+    "title": "Galerij",
+    "subtitle": "Foto's van eerdere evenementen"
+  },
+  "pricing": {
+    "title": "Prijzen",
+    "subtitle": "Kies het pakket dat bij jouw evenement past",
+    "basic": {
+      "name": "Basis",
+      "price": "€350",
+      "duration": "4 uur",
+      "features": [
+        "Professionele DJ apparatuur",
+        "Muziek naar keuze",
+        "Basis verlichting",
+        "Spotify playlist integratie"
+      ],
+      "button": "Boek Basis"
+    },
+    "premium": {
+      "name": "Premium",
+      "price": "€550",
+      "duration": "6 uur",
+      "features": [
+        "Alles van Basis pakket",
+        "Geavanceerde verlichting",
+        "Rookmachine",
+        "Microfoon voor aankondigingen",
+        "Extra optreden tijd"
+      ],
+      "button": "Boek Premium"
+    },
+    "deluxe": {
+      "name": "Deluxe",
+      "price": "€750",
+      "duration": "8 uur",
+      "features": [
+        "Alles van Premium pakket",
+        "Complete licht- en geluidsysteem",
+        "DJ booth decoratie",
+        "Speciale effecten",
+        "Onbeperkte playlist aanvragen"
+      ],
+      "button": "Boek Deluxe"
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Neem contact op voor een boeking of vraag",
+    "name": "Naam",
+    "email": "E-mail",
+    "phone": "Telefoon",
+    "message": "Bericht",
+    "eventDate": "Evenement Datum",
+    "eventType": "Type Evenement",
+    "submit": "Verstuur",
+    "success": "Bedankt voor je bericht! Ik neem zo snel mogelijk contact met je op.",
+    "error": "Er is iets misgegaan. Probeer het later opnieuw."
+  },
+  "auth": {
+    "signin": {
+      "title": "Inloggen",
+      "email": "E-mail",
+      "password": "Wachtwoord",
+      "button": "Inloggen",
+      "noAccount": "Nog geen account?",
+      "signup": "Registreren",
+      "error": "Ongeldige inloggegevens"
+    },
+    "signup": {
+      "title": "Registreren",
+      "email": "E-mail",
+      "password": "Wachtwoord",
+      "confirmPassword": "Bevestig Wachtwoord",
+      "bookingReference": "Boekingsreferentie",
+      "button": "Registreren",
+      "hasAccount": "Al een account?",
+      "signin": "Inloggen",
+      "error": "Er is iets misgegaan bij registratie"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welkom",
+    "booking": {
+      "title": "Jouw Boeking",
+      "eventName": "Evenement",
+      "eventDate": "Datum",
+      "status": "Status",
+      "pending": "In afwachting",
+      "confirmed": "Bevestigd",
+      "completed": "Voltooid"
+    },
+    "playlist": {
+      "title": "Maak Je Playlist",
+      "button": "Ga naar Playlist",
+      "search": "Zoek naar liedjes",
+      "searching": "Zoeken...",
+      "noResults": "Geen resultaten gevonden",
+      "mustHave": "Must-Have",
+      "normal": "Normaal",
+      "blacklist": "Niet Gewenst",
+      "addTo": "Voeg toe aan",
+      "remove": "Verwijder",
+      "createPlaylist": "Maak Spotify Playlist",
+      "syncChanges": "Synchroniseer Wijzigingen",
+      "playlistCreated": "Playlist succesvol aangemaakt!",
+      "playlistUpdated": "Playlist succesvol bijgewerkt!",
+      "viewOnSpotify": "Bekijk op Spotify"
+    }
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Er is een fout opgetreden",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "close": "Sluiten"
+  }
+}
