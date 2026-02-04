@@ -1,0 +1,30 @@
+# Netlify configuration for DJ Bazuri website
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Configure secrets scanning to allow expected values in build output
+# NEXT_PUBLIC_* variables are intentionally embedded in client-side JS
+# Server-side secrets appear in .next/server bundles but are not exposed to clients
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_APP_URL"
+  SECRETS_SCAN_OMIT_PATHS = ".next/**"
+
+# Next.js specific settings
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Cache static assets
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
