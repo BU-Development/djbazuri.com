@@ -2,16 +2,46 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navigation() {
   const t = useTranslations('nav');
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const locale = pathname.split('/')[1];
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setLoading(false);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.refresh();
+  };
 
   const navLinks = [
     { href: `/${locale}`, label: t('home') },
@@ -52,6 +82,32 @@ export default function Navigation() {
               </Link>
             ))}
             <LanguageSwitcher />
+
+            {!loading && (
+              user ? (
+                <div className="flex items-center space-x-4">
+                  <Link
+                    href={`/${locale}/dashboard`}
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                  >
+                    {t('dashboard')}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 rounded-md text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                  >
+                    Uitloggen
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href={`/${locale}/auth/signin`}
+                  className="px-4 py-2 rounded-md text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                >
+                  {t('login')}
+                </Link>
+              )
+            )}
           </div>
 
           <div className="md:hidden flex items-center">
@@ -106,6 +162,37 @@ export default function Navigation() {
             <div className="px-3 py-2">
               <LanguageSwitcher />
             </div>
+
+            {!loading && (
+              user ? (
+                <>
+                  <Link
+                    href={`/${locale}/dashboard`}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('dashboard')}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-red-600 text-white hover:bg-red-700"
+                  >
+                    Uitloggen
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href={`/${locale}/auth/signin`}
+                  className="block px-3 py-2 rounded-md text-base font-medium bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('login')}
+                </Link>
+              )
+            )}
           </div>
         </div>
       )}
