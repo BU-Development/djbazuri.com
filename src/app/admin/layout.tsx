@@ -33,37 +33,43 @@ export default async function AdminLayout({
                 href="/admin"
                 className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
               >
-                Dashboard
+                📊 Dashboard
               </Link>
               <Link
-                href="/admin/links"
+                href="/admin/bookings"
                 className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
               >
-                Linktree Beheer
-              </Link>
-              <Link
-                href="/admin/pricing"
-                className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
-              >
-                Prijzen Beheer
-              </Link>
-              <Link
-                href="/admin/gallery"
-                className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
-              >
-                Foto's Beheer
+                📅 Boekingen
               </Link>
               <Link
                 href="/admin/playlists"
                 className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
               >
-                Playlist Beheer
+                🎵 Playlists
               </Link>
               <Link
                 href="/admin/chats"
                 className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
               >
-                Chats
+                💬 Chats
+              </Link>
+              <Link
+                href="/admin/pricing"
+                className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
+              >
+                💰 Prijzen
+              </Link>
+              <Link
+                href="/admin/gallery"
+                className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
+              >
+                📸 Foto's
+              </Link>
+              <Link
+                href="/admin/links"
+                className="block px-4 py-3 rounded-lg hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
+              >
+                🔗 Linktree
               </Link>
               <Link
                 href="/nl"

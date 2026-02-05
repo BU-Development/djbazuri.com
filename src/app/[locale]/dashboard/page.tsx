@@ -12,6 +12,8 @@ function DashboardContent({ locale }: { locale: string }) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ eventName: '', eventDate: '' });
 
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -25,16 +27,32 @@ function DashboardContent({ locale }: { locale: string }) {
     };
     getUser();
 
-    // Simulate booking fetch
-    setTimeout(() => {
-      setBooking({
-        eventName: 'Birthday Party',
-        eventDate: '2026-03-15',
-        status: 'confirmed',
-      });
-      setLoading(false);
-    }, 500);
+    // Load event details from localStorage
+    const savedEventName = localStorage.getItem('event_name') || '';
+    const savedEventDate = localStorage.getItem('event_date') || '';
+
+    setBooking({
+      eventName: savedEventName || 'Mijn Event',
+      eventDate: savedEventDate || new Date().toISOString().split('T')[0],
+      status: 'confirmed',
+    });
+    setEditForm({
+      eventName: savedEventName || 'Mijn Event',
+      eventDate: savedEventDate || new Date().toISOString().split('T')[0],
+    });
+    setLoading(false);
   }, []);
+
+  const handleSaveEvent = () => {
+    localStorage.setItem('event_name', editForm.eventName);
+    localStorage.setItem('event_date', editForm.eventDate);
+    setBooking({
+      ...booking,
+      eventName: editForm.eventName,
+      eventDate: editForm.eventDate,
+    });
+    setIsEditing(false);
+  };
 
   if (loading) {
     return (
@@ -80,41 +98,105 @@ function DashboardContent({ locale }: { locale: string }) {
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-zinc-900 border border-purple-500/20 rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">{t('booking.title')}</h2>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-400">{t('booking.eventName')}</p>
-                <p className="text-lg font-semibold text-white">{booking.eventName}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">{t('booking.eventDate')}</p>
-                <p className="text-lg font-semibold text-white">
-                  {new Date(booking.eventDate).toLocaleDateString('nl-NL')}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">{t('booking.status')}</p>
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                    booking.status === 'confirmed'
-                      ? 'bg-green-600 text-white'
-                      : booking.status === 'pending'
-                      ? 'bg-yellow-600 text-white'
-                      : 'bg-gray-600 text-white'
-                  }`}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">{t('booking.title')}</h2>
+              {!isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-purple-400 hover:text-purple-300 text-sm"
                 >
-                  {t(`booking.${booking.status}`)}
-                </span>
-              </div>
+                  ✏️ Bewerken
+                </button>
+              )}
             </div>
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Event Naam</label>
+                  <input
+                    type="text"
+                    value={editForm.eventName}
+                    onChange={(e) => setEditForm({ ...editForm, eventName: e.target.value })}
+                    className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                    placeholder="Bijv. Bruiloft Jan & Lisa"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Event Datum</label>
+                  <input
+                    type="date"
+                    value={editForm.eventDate}
+                    onChange={(e) => setEditForm({ ...editForm, eventDate: e.target.value })}
+                    className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveEvent}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Opslaan
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditForm({ eventName: booking.eventName, eventDate: booking.eventDate });
+                    }}
+                    className="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600 transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-400">{t('booking.eventName')}</p>
+                  <p className="text-lg font-semibold text-white">{booking.eventName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">{t('booking.eventDate')}</p>
+                  <p className="text-lg font-semibold text-white">
+                    {new Date(booking.eventDate).toLocaleDateString('nl-NL', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">{t('booking.status')}</p>
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                      booking.status === 'confirmed'
+                        ? 'bg-green-600 text-white'
+                        : booking.status === 'pending'
+                        ? 'bg-yellow-600 text-white'
+                        : 'bg-gray-600 text-white'
+                    }`}
+                  >
+                    {t(`booking.${booking.status}`)}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-gradient-to-br from-purple-900 to-purple-600 rounded-lg shadow-md border border-purple-500/30 p-6 text-white">
             <h2 className="text-2xl font-bold mb-4">Event Countdown</h2>
-            <div className="text-center">
+            <div className="text-center mb-4">
               <div className="text-6xl font-bold mb-2">{daysUntilEvent}</div>
               <p className="text-xl">dagen tot je evenement</p>
             </div>
+            <a
+              href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(booking.eventName + ' - DJ Bazuri')}&dates=${booking.eventDate.replace(/-/g, '')}/${booking.eventDate.replace(/-/g, '')}&details=${encodeURIComponent('Event met DJ Bazuri\n\nBekijk je playlist: ' + (typeof window !== 'undefined' ? window.location.origin : '') + '/' + locale + '/dashboard/playlist')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center py-2 bg-white/20 hover:bg-white/30 rounded-lg font-semibold transition-colors text-sm"
+            >
+              📅 Toevoegen aan Google Agenda
+            </a>
           </div>
         </div>
 
