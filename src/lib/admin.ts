@@ -3,7 +3,6 @@ import { cookies } from 'next/headers';
 
 // Lijst met admin emails
 const ADMIN_EMAILS = [
-  'djbazuri@gmail.com',
   'djbazuri@proton.me',
   'boazuri@proton.me',
 ];
