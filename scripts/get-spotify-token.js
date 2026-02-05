@@ -14,7 +14,7 @@ const { URL } = require('url');
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const REDIRECT_URI = 'http://localhost:8888/callback';
+const REDIRECT_URI = 'http://127.0.0.1:8888/callback';
 
 // Required scopes for playlist management
 const SCOPES = [
@@ -36,7 +36,7 @@ console.log('Dit script genereert een nieuwe refresh token met de juiste permiss
 
 // Create a simple HTTP server to receive the callback
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://localhost:8888`);
+  const url = new URL(req.url, `http://127.0.0.1:8888`);
 
   if (url.pathname === '/callback') {
     const code = url.searchParams.get('code');
@@ -109,7 +109,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(8888, () => {
+server.listen(8888, '127.0.0.1', () => {
   const authUrl = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
     response_type: 'code',
     client_id: CLIENT_ID,
