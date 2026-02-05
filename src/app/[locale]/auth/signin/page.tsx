@@ -3,11 +3,15 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function SignInPage({ params: { locale } }: { params: { locale: string } }) {
   const t = useTranslations('auth.signin');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || `/${locale}`;
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -15,20 +19,40 @@ export default function SignInPage({ params: { locale } }: { params: { locale: s
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      console.log('Sign in attempt:', formData.email);
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-      setTimeout(() => {
-        setError(t('error'));
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Ongeldige inloggegevens. Controleer je email en wachtwoord.');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Je email is nog niet bevestigd. Check je inbox.');
+        } else {
+          setError(signInError.message);
+        }
         setLoading(false);
-      }, 1000);
+        return;
+      }
+
+      if (data.user) {
+        router.push(redirect);
+        router.refresh();
+      }
     } catch (err) {
-      setError(t('error'));
+      setError('Er is iets misgegaan. Probeer het later opnieuw.');
       setLoading(false);
     }
   };
@@ -45,7 +69,7 @@ export default function SignInPage({ params: { locale } }: { params: { locale: s
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
-          <p className="text-gray-600">Welcome back to DJ Bazuri</p>
+          <p className="text-gray-600">Welkom terug bij DJ Bazuri</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -61,7 +85,7 @@ export default function SignInPage({ params: { locale } }: { params: { locale: s
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900"
-              placeholder="your@email.com"
+              placeholder="jouw@email.com"
             />
           </div>
 
@@ -92,7 +116,7 @@ export default function SignInPage({ params: { locale } }: { params: { locale: s
             disabled={loading}
             className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : t('button')}
+            {loading ? 'Bezig met inloggen...' : t('button')}
           </button>
         </form>
 
@@ -102,12 +126,6 @@ export default function SignInPage({ params: { locale } }: { params: { locale: s
             <Link href={`/${locale}/auth/signup`} className="text-purple-600 hover:text-purple-700 font-semibold">
               {t('signup')}
             </Link>
-          </p>
-        </div>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> This is a placeholder. Supabase authentication will be configured when you set up your Supabase project.
           </p>
         </div>
       </div>

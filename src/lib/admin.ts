@@ -1,6 +1,13 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+// Lijst met admin emails
+const ADMIN_EMAILS = [
+  'djbazuri@gmail.com',
+  'djbazuri@proton.me',
+  'boazuri@proton.me',
+];
+
 export async function getServerSupabase() {
   const cookieStore = await cookies();
 
@@ -28,21 +35,12 @@ export async function isAdmin(): Promise<boolean> {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user || !user.email) {
     return false;
   }
 
-  // Haal de admin email op uit de database
-  const { data: config } = await supabase
-    .from('site_config')
-    .select('admin_email')
-    .single();
-
-  if (!config) {
-    return false;
-  }
-
-  return user.email === config.admin_email;
+  // Check of de user email in de admin lijst staat
+  return ADMIN_EMAILS.includes(user.email.toLowerCase());
 }
 
 export async function requireAdmin() {
@@ -51,4 +49,10 @@ export async function requireAdmin() {
   if (!adminStatus) {
     throw new Error('Unauthorized: Admin access required');
   }
+}
+
+export async function getCurrentUser() {
+  const supabase = await getServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }
