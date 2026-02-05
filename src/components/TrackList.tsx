@@ -22,22 +22,22 @@ export default function TrackList({ title, tracks, priority, onRemoveTrack }: Tr
 
   const colors = {
     must_have: {
-      bg: 'bg-green-50',
-      border: 'border-green-200',
-      title: 'text-green-800',
-      badge: 'bg-green-500',
+      bg: 'bg-green-900/30',
+      border: 'border-green-600/50',
+      title: 'text-green-400',
+      badge: 'bg-green-600',
     },
     normal: {
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
-      title: 'text-blue-800',
-      badge: 'bg-blue-500',
+      bg: 'bg-blue-900/30',
+      border: 'border-blue-600/50',
+      title: 'text-blue-400',
+      badge: 'bg-blue-600',
     },
     blacklist: {
-      bg: 'bg-red-50',
-      border: 'border-red-200',
-      title: 'text-red-800',
-      badge: 'bg-red-500',
+      bg: 'bg-red-900/30',
+      border: 'border-red-600/50',
+      title: 'text-red-400',
+      badge: 'bg-red-600',
     },
   };
 
@@ -53,13 +53,13 @@ export default function TrackList({ title, tracks, priority, onRemoveTrack }: Tr
       </div>
 
       {tracks.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">No songs added yet</div>
+        <div className="text-center py-8 text-gray-500">Nog geen nummers</div>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {tracks.map((track) => (
             <div
               key={track.id}
-              className="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition-shadow"
+              className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors"
             >
               <div className="flex items-center flex-1 min-w-0">
                 {track.albumImage && (
@@ -70,14 +70,14 @@ export default function TrackList({ title, tracks, priority, onRemoveTrack }: Tr
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 truncate text-sm">{track.name}</p>
-                  <p className="text-xs text-gray-600 truncate">{track.artists}</p>
+                  <p className="font-semibold text-white truncate text-sm">{track.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{track.artists}</p>
                 </div>
               </div>
 
               <button
                 onClick={() => onRemoveTrack(track.id)}
-                className="ml-4 text-red-500 hover:text-red-700 transition-colors"
+                className="ml-4 text-red-400 hover:text-red-300 transition-colors"
                 title={t('remove')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
