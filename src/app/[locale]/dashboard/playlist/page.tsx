@@ -25,6 +25,8 @@ function PlaylistContent({ locale }: { locale: string }) {
   const [playlistId, setPlaylistId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [eventName, setEventName] = useState('');
+  const [eventDate, setEventDate] = useState('');
 
   useEffect(() => {
     const savedTracks = localStorage.getItem('playlist_tracks');
@@ -35,6 +37,16 @@ function PlaylistContent({ locale }: { locale: string }) {
     const savedPlaylistId = localStorage.getItem('spotify_playlist_id');
     if (savedPlaylistId) {
       setPlaylistId(savedPlaylistId);
+    }
+
+    const savedEventName = localStorage.getItem('event_name');
+    if (savedEventName) {
+      setEventName(savedEventName);
+    }
+
+    const savedEventDate = localStorage.getItem('event_date');
+    if (savedEventDate) {
+      setEventDate(savedEventDate);
     }
   }, []);
 
@@ -65,6 +77,10 @@ function PlaylistContent({ locale }: { locale: string }) {
       return;
     }
 
+    // Save event details to localStorage
+    localStorage.setItem('event_name', eventName);
+    localStorage.setItem('event_date', eventDate);
+
     setLoading(true);
 
     try {
@@ -75,6 +91,8 @@ function PlaylistContent({ locale }: { locale: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tracks: tracksToAdd,
+          eventName,
+          eventDate,
         }),
       });
 
@@ -198,6 +216,30 @@ function PlaylistContent({ locale }: { locale: string }) {
 
         <div className="bg-zinc-900 border border-purple-500/20 rounded-lg shadow-md p-6">
           <h3 className="text-xl font-bold text-white mb-4">Playlist Acties</h3>
+
+          {!playlistId && (
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Event Naam</label>
+                <input
+                  type="text"
+                  value={eventName}
+                  onChange={(e) => setEventName(e.target.value)}
+                  placeholder="Bijv. Bruiloft Jan & Lisa"
+                  className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Event Datum</label>
+                <input
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                  className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid md:grid-cols-2 gap-4">
             {!playlistId ? (

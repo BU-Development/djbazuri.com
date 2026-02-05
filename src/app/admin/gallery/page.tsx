@@ -31,9 +31,11 @@ export default function AdminGalleryPage() {
   }, []);
 
   async function checkBucket() {
-    const { data } = await supabase.storage.listBuckets();
-    const exists = data?.some(b => b.name === 'gallery');
-    setBucketExists(exists || false);
+    // listBuckets() requires admin/service role permissions and won't work with anon key
+    // Instead, try to list files in the bucket - if it fails, the bucket doesn't exist or isn't accessible
+    const { error } = await supabase.storage.from('gallery').list('', { limit: 1 });
+    // If no error, bucket exists and is accessible
+    setBucketExists(!error);
   }
 
   async function loadPhotos() {

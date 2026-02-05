@@ -48,13 +48,14 @@ export async function searchTracks(query: string, limit: number = 20) {
   }
 }
 
-export async function createPlaylist(userId: string, playlistName: string, description: string) {
+export async function createPlaylist(userId: string, playlistName: string, description: string, collaborative: boolean = false) {
   await getAccessToken();
 
   try {
     const result = await spotifyApi.createPlaylist(playlistName, {
       description,
-      public: false,
+      public: !collaborative, // collaborative playlists must be non-public
+      collaborative,
     });
     return result.body;
   } catch (error) {

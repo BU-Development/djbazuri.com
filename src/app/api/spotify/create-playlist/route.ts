@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { tracks } = body;
+    const { tracks, eventName, eventDate } = body;
 
     if (!tracks || !Array.isArray(tracks)) {
       return NextResponse.json({ error: 'Tracks array is required' }, { status: 400 });
@@ -20,10 +20,21 @@ export async function POST(request: NextRequest) {
 
     const userProfile = await getCurrentUserProfile();
 
+    // Format playlist name with event details
+    const formattedDate = eventDate
+      ? new Date(eventDate).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+      : new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const playlistName = eventName
+      ? `${eventName} - ${formattedDate}`
+      : `DJ Bazuri Event - ${formattedDate}`;
+
+    // Create a collaborative playlist so the client can also edit it
     const playlist = await createPlaylist(
       userProfile.id,
-      'DJ Bazuri - Event Playlist',
-      'Playlist created for your event with DJ Bazuri'
+      playlistName,
+      `Gedeelde playlist voor ${eventName || 'je event'} met DJ Bazuri. Voeg gerust je eigen nummers toe!`,
+      true // collaborative = true
     );
 
     const trackUris = tracks.map((track: any) => `spotify:track:${track.id}`);
