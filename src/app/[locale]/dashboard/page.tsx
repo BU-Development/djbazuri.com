@@ -3,14 +3,29 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import AuthGuard from '@/components/AuthGuard';
 import BookingChat from '@/components/BookingChat';
 
-export default function DashboardPage({ params: { locale } }: { params: { locale: string } }) {
+function DashboardContent({ locale }: { locale: string }) {
   const t = useTranslations('dashboard');
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+
+    // Simulate booking fetch
     setTimeout(() => {
       setBooking({
         eventName: 'Birthday Party',
@@ -23,10 +38,10 @@ export default function DashboardPage({ params: { locale } }: { params: { locale
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+          <p className="mt-4 text-gray-400">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -34,11 +49,11 @@ export default function DashboardPage({ params: { locale } }: { params: { locale
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Booking Found</h2>
-          <p className="text-gray-600 mb-6">
-            You don't have an active booking. Please contact DJ Bazuri to book an event.
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-zinc-900 rounded-lg shadow-md p-8 text-center border border-purple-500/20">
+          <h2 className="text-2xl font-bold text-white mb-4">Geen Boeking Gevonden</h2>
+          <p className="text-gray-400 mb-6">
+            Je hebt nog geen actieve boeking. Neem contact op met DJ Bazuri om een evenement te boeken.
           </p>
           <Link
             href={`/${locale}/contact`}
@@ -60,11 +75,11 @@ export default function DashboardPage({ params: { locale } }: { params: { locale
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">{t('title')}</h1>
-          <p className="text-xl text-gray-400">{t('welcome')}, User!</p>
+          <p className="text-xl text-gray-400">{t('welcome')}, {user?.email?.split('@')[0] || 'Gebruiker'}!</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-dark-50 border border-primary/20 rounded-lg shadow-md p-6">
+          <div className="bg-zinc-900 border border-purple-500/20 rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold text-white mb-4">{t('booking.title')}</h2>
             <div className="space-y-3">
               <div>
@@ -74,7 +89,7 @@ export default function DashboardPage({ params: { locale } }: { params: { locale
               <div>
                 <p className="text-sm text-gray-400">{t('booking.eventDate')}</p>
                 <p className="text-lg font-semibold text-white">
-                  {new Date(booking.eventDate).toLocaleDateString()}
+                  {new Date(booking.eventDate).toLocaleDateString('nl-NL')}
                 </p>
               </div>
               <div>
@@ -94,25 +109,25 @@ export default function DashboardPage({ params: { locale } }: { params: { locale
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-primary-700 to-primary rounded-lg shadow-md border border-primary/30 p-6 text-white">
+          <div className="bg-gradient-to-br from-purple-900 to-purple-600 rounded-lg shadow-md border border-purple-500/30 p-6 text-white">
             <h2 className="text-2xl font-bold mb-4">Event Countdown</h2>
             <div className="text-center">
               <div className="text-6xl font-bold mb-2">{daysUntilEvent}</div>
-              <p className="text-xl">days until your event</p>
+              <p className="text-xl">dagen tot je evenement</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-dark-50 border border-primary/20 rounded-lg shadow-md p-8 mb-8">
+        <div className="bg-zinc-900 border border-purple-500/20 rounded-lg shadow-md p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">{t('playlist.title')}</h2>
               <p className="text-gray-400">
-                Create your personalized playlist with your favorite songs
+                Maak je eigen playlist met je favoriete nummers
               </p>
             </div>
             <svg
-              className="w-16 h-16 text-primary"
+              className="w-16 h-16 text-purple-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -129,21 +144,21 @@ export default function DashboardPage({ params: { locale } }: { params: { locale
           <div className="grid md:grid-cols-3 gap-4 mb-6">
             <div className="bg-green-600/20 border border-green-600/30 p-4 rounded-lg text-center">
               <div className="text-3xl font-bold text-green-400 mb-1">0</div>
-              <p className="text-sm text-gray-400">Must-Have Songs</p>
+              <p className="text-sm text-gray-400">Must-Have Nummers</p>
             </div>
             <div className="bg-blue-600/20 border border-blue-600/30 p-4 rounded-lg text-center">
               <div className="text-3xl font-bold text-blue-400 mb-1">0</div>
-              <p className="text-sm text-gray-400">Normal Songs</p>
+              <p className="text-sm text-gray-400">Normale Nummers</p>
             </div>
             <div className="bg-red-600/20 border border-red-600/30 p-4 rounded-lg text-center">
               <div className="text-3xl font-bold text-red-400 mb-1">0</div>
-              <p className="text-sm text-gray-400">Blacklisted Songs</p>
+              <p className="text-sm text-gray-400">Blacklist Nummers</p>
             </div>
           </div>
 
           <Link
             href={`/${locale}/dashboard/playlist`}
-            className="block w-full text-center py-4 bg-primary hover:bg-primary-600 text-white rounded-lg font-semibold transition-colors"
+            className="block w-full text-center py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors"
           >
             {t('playlist.button')}
           </Link>
@@ -154,42 +169,50 @@ export default function DashboardPage({ params: { locale } }: { params: { locale
           <BookingChat bookingId="demo-booking-id" />
         </div>
 
-        <div className="mt-6 bg-dark-50 border border-primary/20 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-primary mb-2">Quick Tips</h3>
+        <div className="mt-6 bg-zinc-900 border border-purple-500/20 rounded-lg p-6">
+          <h3 className="text-lg font-bold text-purple-400 mb-2">Quick Tips</h3>
           <ul className="space-y-2 text-gray-300">
             <li className="flex items-start">
-              <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                   clipRule="evenodd"
                 />
               </svg>
-              <span>Add your favorite songs to the playlist creator</span>
+              <span>Voeg je favoriete nummers toe aan de playlist creator</span>
             </li>
             <li className="flex items-start">
-              <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                   clipRule="evenodd"
                 />
               </svg>
-              <span>Mark must-have songs that you really want to hear</span>
+              <span>Markeer must-have nummers die je echt wilt horen</span>
             </li>
             <li className="flex items-start">
-              <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                   clipRule="evenodd"
                 />
               </svg>
-              <span>Blacklist songs you don't want to hear at your event</span>
+              <span>Blacklist nummers die je niet wilt horen op je evenement</span>
             </li>
           </ul>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage({ params: { locale } }: { params: { locale: string } }) {
+  return (
+    <AuthGuard>
+      <DashboardContent locale={locale} />
+    </AuthGuard>
   );
 }
