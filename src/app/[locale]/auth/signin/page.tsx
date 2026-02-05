@@ -120,11 +120,11 @@ export default function SignInPage({ params: { locale } }: { params: { locale: s
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            {t('noAccount')}{' '}
-            <Link href={`/${locale}/auth/signup`} className="text-purple-600 hover:text-purple-700 font-semibold">
-              {t('signup')}
+        <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+          <p className="text-sm text-purple-800">
+            <strong>Geen inloggegevens?</strong> Je ontvangt je login van DJ Bazuri na het boeken van een event.{' '}
+            <Link href={`/${locale}/auth/signup`} className="text-purple-600 hover:text-purple-700 font-semibold underline">
+              Meer info
             </Link>
           </p>
         </div>

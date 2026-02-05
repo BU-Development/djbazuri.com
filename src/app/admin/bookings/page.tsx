@@ -5,12 +5,14 @@ import { createBrowserClient } from '@supabase/ssr';
 
 type Booking = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   event_name: string;
   event_date: string;
   package_type: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   notes: string;
+  client_name: string | null;
+  client_email: string | null;
   created_at: string;
 };
 
@@ -18,12 +20,20 @@ export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+  const [generatedCredentials, setGeneratedCredentials] = useState<{
+    email: string;
+    password: string;
+    bookingId: string;
+  } | null>(null);
   const [newBooking, setNewBooking] = useState({
     event_name: '',
     event_date: '',
     package_type: 'basic',
     status: 'pending' as const,
     notes: '',
+    client_name: '',
+    client_email: '',
   });
 
   const supabase = createBrowserClient(
@@ -56,6 +66,8 @@ export default function AdminBookingsPage() {
       package_type: newBooking.package_type,
       status: newBooking.status,
       notes: newBooking.notes,
+      client_name: newBooking.client_name || null,
+      client_email: newBooking.client_email || null,
     });
 
     if (!error) {
@@ -65,6 +77,8 @@ export default function AdminBookingsPage() {
         package_type: 'basic',
         status: 'pending',
         notes: '',
+        client_name: '',
+        client_email: '',
       });
       setShowForm(false);
       loadBookings();
@@ -81,6 +95,62 @@ export default function AdminBookingsPage() {
       await supabase.from('bookings').delete().eq('id', id);
       loadBookings();
     }
+  }
+
+  function generatePassword(length = 12) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  }
+
+  async function handleGenerateCredentials(booking: Booking) {
+    if (!booking.client_email) {
+      alert('Vul eerst een email adres in voor de klant');
+      return;
+    }
+
+    setGeneratingFor(booking.id);
+
+    const password = generatePassword();
+
+    try {
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: booking.client_email,
+          password,
+          bookingId: booking.id,
+          eventName: booking.event_name,
+          clientName: booking.client_name,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setGeneratedCredentials({
+          email: booking.client_email,
+          password,
+          bookingId: booking.id,
+        });
+        loadBookings();
+      } else {
+        alert(`Fout bij aanmaken account: ${data.error}`);
+      }
+    } catch (error) {
+      alert('Er is iets misgegaan bij het aanmaken van het account');
+    } finally {
+      setGeneratingFor(null);
+    }
+  }
+
+  async function handleUpdateClientInfo(bookingId: string, field: string, value: string) {
+    await supabase.from('bookings').update({ [field]: value }).eq('id', bookingId);
+    loadBookings();
   }
 
   function generateCalendarUrl(booking: Booking) {
@@ -113,6 +183,10 @@ END:VCALENDAR`;
     a.download = `dj-bazuri-${booking.event_name.replace(/\s+/g, '-').toLowerCase()}.ics`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
   }
 
   const getStatusColor = (status: string) => {
@@ -150,6 +224,75 @@ END:VCALENDAR`;
         </button>
       </div>
 
+      {/* Generated Credentials Modal */}
+      {generatedCredentials && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 border border-purple-500/30 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-green-400 mb-4">Account Aangemaakt!</h2>
+            <p className="text-gray-300 mb-4">
+              Stuur deze gegevens naar de klant zodat ze kunnen inloggen:
+            </p>
+
+            <div className="space-y-3 bg-black rounded-lg p-4 mb-4">
+              <div>
+                <label className="text-xs text-gray-500">Email</label>
+                <div className="flex items-center gap-2">
+                  <code className="text-purple-400 flex-1">{generatedCredentials.email}</code>
+                  <button
+                    onClick={() => copyToClipboard(generatedCredentials.email)}
+                    className="px-2 py-1 bg-purple-600 rounded text-xs hover:bg-purple-700"
+                  >
+                    Kopieer
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Wachtwoord</label>
+                <div className="flex items-center gap-2">
+                  <code className="text-purple-400 flex-1">{generatedCredentials.password}</code>
+                  <button
+                    onClick={() => copyToClipboard(generatedCredentials.password)}
+                    className="px-2 py-1 bg-purple-600 rounded text-xs hover:bg-purple-700"
+                  >
+                    Kopieer
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Login URL</label>
+                <div className="flex items-center gap-2">
+                  <code className="text-purple-400 flex-1 text-sm">https://djbazuri.com/nl/auth/signin</code>
+                  <button
+                    onClick={() => copyToClipboard('https://djbazuri.com/nl/auth/signin')}
+                    className="px-2 py-1 bg-purple-600 rounded text-xs hover:bg-purple-700"
+                  >
+                    Kopieer
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const text = `Hoi!\n\nHierbij je inloggegevens voor DJ Bazuri:\n\nEmail: ${generatedCredentials.email}\nWachtwoord: ${generatedCredentials.password}\n\nLogin op: https://djbazuri.com/nl/auth/signin\n\nDaar kun je je playlist samenstellen en met mij chatten over je event!\n\nGroetjes,\nDJ Bazuri`;
+                copyToClipboard(text);
+                alert('Volledige bericht gekopieerd!');
+              }}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg mb-3"
+            >
+              Kopieer Volledig Bericht
+            </button>
+
+            <button
+              onClick={() => setGeneratedCredentials(null)}
+              className="w-full px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg"
+            >
+              Sluiten
+            </button>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-6 mb-8">
           <h2 className="text-xl font-bold mb-4">Nieuwe Boeking Aanmaken</h2>
@@ -173,6 +316,26 @@ END:VCALENDAR`;
                   onChange={(e) => setNewBooking({ ...newBooking, event_date: e.target.value })}
                   className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Klant Naam</label>
+                <input
+                  type="text"
+                  value={newBooking.client_name}
+                  onChange={(e) => setNewBooking({ ...newBooking, client_name: e.target.value })}
+                  className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white"
+                  placeholder="Jan Jansen"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Klant Email</label>
+                <input
+                  type="email"
+                  value={newBooking.client_email}
+                  onChange={(e) => setNewBooking({ ...newBooking, client_email: e.target.value })}
+                  className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white"
+                  placeholder="klant@email.com"
                 />
               </div>
               <div>
@@ -234,7 +397,7 @@ END:VCALENDAR`;
                 key={booking.id}
                 className="bg-zinc-900 border border-purple-500/20 rounded-xl p-6"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-semibold">{booking.event_name}</h3>
@@ -246,6 +409,11 @@ END:VCALENDAR`;
                         {booking.status === 'completed' && 'Voltooid'}
                         {booking.status === 'cancelled' && 'Geannuleerd'}
                       </span>
+                      {booking.user_id && (
+                        <span className="px-2 py-1 bg-green-600/20 text-green-400 rounded-full text-xs">
+                          Account actief
+                        </span>
+                      )}
                     </div>
                     <div className="text-gray-400 space-y-1">
                       <p>
@@ -258,11 +426,51 @@ END:VCALENDAR`;
                         })}
                       </p>
                       <p>📦 Pakket: {booking.package_type}</p>
+                      {booking.client_name && <p>👤 Klant: {booking.client_name}</p>}
+                      {booking.client_email && <p>📧 Email: {booking.client_email}</p>}
                       {booking.notes && <p>📝 {booking.notes}</p>}
                     </div>
+
+                    {/* Client info editing */}
+                    {!booking.user_id && (
+                      <div className="mt-4 p-4 bg-black/50 rounded-lg">
+                        <p className="text-sm text-yellow-400 mb-3">
+                          Vul klantgegevens in om een account aan te maken:
+                        </p>
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            placeholder="Klant naam"
+                            defaultValue={booking.client_name || ''}
+                            onBlur={(e) =>
+                              handleUpdateClientInfo(booking.id, 'client_name', e.target.value)
+                            }
+                            className="px-3 py-2 bg-zinc-800 border border-purple-500/30 rounded-lg text-sm"
+                          />
+                          <input
+                            type="email"
+                            placeholder="Klant email"
+                            defaultValue={booking.client_email || ''}
+                            onBlur={(e) =>
+                              handleUpdateClientInfo(booking.id, 'client_email', e.target.value)
+                            }
+                            className="px-3 py-2 bg-zinc-800 border border-purple-500/30 rounded-lg text-sm"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2">
+                    {!booking.user_id && (
+                      <button
+                        onClick={() => handleGenerateCredentials(booking)}
+                        disabled={generatingFor === booking.id || !booking.client_email}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {generatingFor === booking.id ? 'Bezig...' : '🔑 Maak Account'}
+                      </button>
+                    )}
                     <a
                       href={generateCalendarUrl(booking)}
                       target="_blank"
@@ -326,6 +534,7 @@ END:VCALENDAR`;
                       <p className="text-sm text-gray-400">
                         {new Date(booking.event_date).toLocaleDateString('nl-NL')} -{' '}
                         {booking.package_type}
+                        {booking.client_name && ` - ${booking.client_name}`}
                       </p>
                     </div>
                     <span
