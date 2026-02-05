@@ -1,70 +1,91 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 
 interface Package {
   id: string;
-  name: string;
-  price: string;
+  name_nl: string;
+  name_en: string;
+  price: number;
   duration: string;
-  features: string[];
+  features_nl: string[];
+  features_en: string[];
+  sort_order: number;
 }
 
 export default function AdminPricingPage() {
-  const [packages, setPackages] = useState<Package[]>([
-    {
-      id: 'basic',
-      name: 'Basis',
-      price: '350',
-      duration: '4 uur',
-      features: [
-        'Professionele DJ apparatuur',
-        'Muziek naar keuze',
-        'Basis verlichting',
-        'Spotify playlist integratie',
-      ],
-    },
-    {
-      id: 'premium',
-      name: 'Premium',
-      price: '550',
-      duration: '6 uur',
-      features: [
-        'Alles van Basis pakket',
-        'Geavanceerde verlichting',
-        'Rookmachine',
-        'Microfoon voor aankondigingen',
-        'Extra optreden tijd',
-      ],
-    },
-    {
-      id: 'deluxe',
-      name: 'Deluxe',
-      price: '750',
-      duration: '8 uur',
-      features: [
-        'Alles van Premium pakket',
-        'Complete licht- en geluidsysteem',
-        'DJ booth decoratie',
-        'Speciale effecten',
-        'Onbeperkte playlist aanvragen',
-      ],
-    },
-  ]);
-
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
   const [newFeature, setNewFeature] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleSave = async () => {
-    // TODO: Save to database
-    // For now, this shows the current values
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    loadPricing();
+  }, []);
+
+  async function loadPricing() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('pricing')
+      .select('*')
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error loading pricing:', error);
+      // Gebruik default data als tabel niet bestaat
+      setPackages([
+        { id: 'basic', name_nl: 'Basis', name_en: 'Basic', price: 350, duration: '4 uur', features_nl: ['Professionele DJ apparatuur', 'Muziek naar keuze', 'Basis verlichting', 'Spotify playlist integratie'], features_en: ['Professional DJ equipment', 'Music of your choice', 'Basic lighting', 'Spotify playlist integration'], sort_order: 1 },
+        { id: 'premium', name_nl: 'Premium', name_en: 'Premium', price: 550, duration: '6 uur', features_nl: ['Alles van Basis pakket', 'Geavanceerde verlichting', 'Rookmachine', 'Microfoon'], features_en: ['Everything from Basic', 'Advanced lighting', 'Smoke machine', 'Microphone'], sort_order: 2 },
+        { id: 'deluxe', name_nl: 'Deluxe', name_en: 'Deluxe', price: 750, duration: '8 uur', features_nl: ['Alles van Premium pakket', 'Complete licht/geluid', 'DJ booth decoratie', 'Speciale effecten'], features_en: ['Everything from Premium', 'Complete light/sound', 'DJ booth decoration', 'Special effects'], sort_order: 3 },
+      ]);
+      setMessage({ type: 'error', text: 'Database tabel ontbreekt. Voer het setup script uit: node scripts/create-tables.js' });
+    } else {
+      setPackages(data || []);
+    }
+    setLoading(false);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      for (const pkg of packages) {
+        const { error } = await supabase
+          .from('pricing')
+          .upsert({
+            id: pkg.id,
+            name_nl: pkg.name_nl,
+            name_en: pkg.name_en,
+            price: pkg.price,
+            duration: pkg.duration,
+            features_nl: pkg.features_nl,
+            features_en: pkg.features_en,
+            sort_order: pkg.sort_order,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+      }
+      setMessage({ type: 'success', text: 'Prijzen opgeslagen!' });
+    } catch (error: any) {
+      console.error('Error saving:', error);
+      setMessage({ type: 'error', text: `Fout bij opslaan: ${error.message}` });
+    }
+
+    setSaving(false);
+  }
 
   const handleEditPackage = (pkg: Package) => {
-    setEditingPackage({ ...pkg, features: [...pkg.features] });
+    setEditingPackage({ ...pkg, features_nl: [...pkg.features_nl], features_en: [...pkg.features_en] });
   };
 
   const handleUpdatePackage = () => {
@@ -81,7 +102,8 @@ export default function AdminPricingPage() {
 
     setEditingPackage({
       ...editingPackage,
-      features: [...editingPackage.features, newFeature.trim()],
+      features_nl: [...editingPackage.features_nl, newFeature.trim()],
+      features_en: [...editingPackage.features_en, newFeature.trim()],
     });
     setNewFeature('');
   };
@@ -91,9 +113,18 @@ export default function AdminPricingPage() {
 
     setEditingPackage({
       ...editingPackage,
-      features: editingPackage.features.filter((_, i) => i !== index),
+      features_nl: editingPackage.features_nl.filter((_, i) => i !== index),
+      features_en: editingPackage.features_en.filter((_, i) => i !== index),
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -101,24 +132,22 @@ export default function AdminPricingPage() {
         <h1 className="text-4xl font-bold text-purple-500">Prijzen Beheer</h1>
         <button
           onClick={handleSave}
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          disabled={saving}
+          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
         >
-          Opslaan
+          {saving ? 'Opslaan...' : 'Opslaan'}
         </button>
       </div>
 
-      {saved && (
-        <div className="mb-6 p-4 bg-green-900/50 border border-green-600 rounded-lg text-green-300">
-          Wijzigingen opgeslagen!
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          message.type === 'success'
+            ? 'bg-green-900/50 border border-green-600 text-green-300'
+            : 'bg-red-900/50 border border-red-600 text-red-300'
+        }`}>
+          {message.text}
         </div>
       )}
-
-      <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-4 mb-8">
-        <p className="text-yellow-300 text-sm">
-          <strong>Let op:</strong> Prijzen worden momenteel uit de vertaalbestanden geladen.
-          Om prijzen permanent te wijzigen, pas de bestanden <code className="bg-black/30 px-1 rounded">messages/nl.json</code> en <code className="bg-black/30 px-1 rounded">messages/en.json</code> aan.
-        </p>
-      </div>
 
       <div className="grid md:grid-cols-3 gap-6">
         {packages.map((pkg) => (
@@ -127,7 +156,7 @@ export default function AdminPricingPage() {
             className="bg-zinc-900 border border-purple-500/20 rounded-xl p-6"
           >
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-white">{pkg.name}</h3>
+              <h3 className="text-xl font-bold text-white">{pkg.name_nl}</h3>
               <button
                 onClick={() => handleEditPackage(pkg)}
                 className="text-purple-400 hover:text-purple-300"
@@ -142,7 +171,7 @@ export default function AdminPricingPage() {
             </div>
 
             <ul className="space-y-2">
-              {pkg.features.map((feature, index) => (
+              {pkg.features_nl.map((feature, index) => (
                 <li key={index} className="flex items-start text-gray-300">
                   <svg className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -160,52 +189,64 @@ export default function AdminPricingPage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold text-white mb-6">
-              {editingPackage.name} Bewerken
+              {editingPackage.name_nl} Bewerken
             </h2>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Naam</label>
-                <input
-                  type="text"
-                  value={editingPackage.name}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, name: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Naam (NL)</label>
+                  <input
+                    type="text"
+                    value={editingPackage.name_nl}
+                    onChange={(e) => setEditingPackage({ ...editingPackage, name_nl: e.target.value })}
+                    className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Naam (EN)</label>
+                  <input
+                    type="text"
+                    value={editingPackage.name_en}
+                    onChange={(e) => setEditingPackage({ ...editingPackage, name_en: e.target.value })}
+                    className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Prijs (€)</label>
+                  <input
+                    type="number"
+                    value={editingPackage.price}
+                    onChange={(e) => setEditingPackage({ ...editingPackage, price: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Duur</label>
+                  <input
+                    type="text"
+                    value={editingPackage.duration}
+                    onChange={(e) => setEditingPackage({ ...editingPackage, duration: e.target.value })}
+                    className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Prijs (€)</label>
-                <input
-                  type="text"
-                  value={editingPackage.price}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, price: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Duur</label>
-                <input
-                  type="text"
-                  value={editingPackage.duration}
-                  onChange={(e) => setEditingPackage({ ...editingPackage, duration: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-purple-500/30 rounded-lg text-white focus:border-purple-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Features</label>
+                <label className="block text-sm text-gray-400 mb-1">Features (NL)</label>
                 <ul className="space-y-2 mb-2">
-                  {editingPackage.features.map((feature, index) => (
+                  {editingPackage.features_nl.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2">
                       <input
                         type="text"
                         value={feature}
                         onChange={(e) => {
-                          const newFeatures = [...editingPackage.features];
+                          const newFeatures = [...editingPackage.features_nl];
                           newFeatures[index] = e.target.value;
-                          setEditingPackage({ ...editingPackage, features: newFeatures });
+                          setEditingPackage({ ...editingPackage, features_nl: newFeatures });
                         }}
                         className="flex-1 px-3 py-1 bg-black border border-purple-500/30 rounded text-white text-sm"
                       />
