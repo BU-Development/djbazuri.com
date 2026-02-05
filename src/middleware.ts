@@ -8,9 +8,14 @@ const intlMiddleware = createMiddleware({
 });
 
 export default function middleware(request: NextRequest) {
-  const response = intlMiddleware(request);
+  const pathname = request.nextUrl.pathname;
 
-  return response;
+  // Skip intl middleware voor admin en links routes
+  if (pathname.startsWith('/admin') || pathname === '/links') {
+    return NextResponse.next();
+  }
+
+  return intlMiddleware(request);
 }
 
 export const config = {

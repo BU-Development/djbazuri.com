@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createPlaylist, addTracksToPlaylist, getCurrentUserProfile } from '@/lib/spotify';
 
 export async function POST(request: NextRequest) {
+  // Check if Spotify is configured
+  if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET || !process.env.SPOTIFY_REFRESH_TOKEN) {
+    return NextResponse.json(
+      { error: 'Spotify is niet geconfigureerd. Voeg SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET en SPOTIFY_REFRESH_TOKEN toe aan .env.local' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { tracks } = body;
@@ -31,7 +39,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Playlist creation error:', error);
     return NextResponse.json(
-      { error: 'Failed to create playlist' },
+      { error: 'Spotify API fout. Controleer je API credentials.' },
       { status: 500 }
     );
   }
