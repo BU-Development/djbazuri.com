@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
 
 interface Photo {
   id: string;
@@ -16,40 +15,26 @@ export default function AdminGalleryPage() {
   const [newPhoto, setNewPhoto] = useState({ url: '', alt: '', category: '' });
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [bucketExists, setBucketExists] = useState(false);
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const categories = ['Bruiloften', 'Festivals', 'Zakelijk', 'Privéfeesten', 'Overig'];
 
   useEffect(() => {
     loadPhotos();
-    checkBucket();
   }, []);
-
-  async function checkBucket() {
-    // listBuckets() requires admin/service role permissions and won't work with anon key
-    // Instead, try to list files in the bucket - if it fails, the bucket doesn't exist or isn't accessible
-    const { error } = await supabase.storage.from('gallery').list('', { limit: 1 });
-    // If no error, bucket exists and is accessible
-    setBucketExists(!error);
-  }
 
   async function loadPhotos() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('gallery')
-      .select('*')
-      .order('sort_order', { ascending: true });
+    try {
+      const response = await fetch('/api/admin/gallery');
+      const result = await response.json();
 
-    if (error) {
-      console.error('Error loading gallery:', error);
-      setMessage({ type: 'error', text: 'Database tabel ontbreekt. Voer setup uit: node scripts/create-tables.js' });
-    } else {
-      setPhotos(data || []);
+      if (!response.ok) {
+        setMessage({ type: 'error', text: result.error || 'Kon foto\'s niet laden' });
+      } else {
+        setPhotos(result.data || []);
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Kon foto\'s niet laden' });
     }
     setLoading(false);
   }
@@ -58,26 +43,25 @@ export default function AdminGalleryPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!bucketExists) {
-      setMessage({ type: 'error', text: 'Storage bucket "gallery" bestaat niet. Maak deze aan in Supabase Dashboard.' });
-      return;
-    }
-
     setUploading(true);
     setMessage(null);
 
     try {
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const { data, error } = await supabase.storage
-        .from('gallery')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+      const response = await fetch('/api/admin/gallery/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-      if (error) throw error;
+      const result = await response.json();
 
-      const { data: urlData } = supabase.storage.from('gallery').getPublicUrl(data.path);
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload mislukt');
+      }
 
-      setNewPhoto({ ...newPhoto, url: urlData.publicUrl });
+      setNewPhoto({ ...newPhoto, url: result.url });
       setMessage({ type: 'success', text: 'Foto geüpload! Voeg beschrijving toe en klik op Toevoegen.' });
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -94,20 +78,24 @@ export default function AdminGalleryPage() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('gallery')
-        .insert({
+      const response = await fetch('/api/admin/gallery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           url: newPhoto.url,
           alt: newPhoto.alt,
           category: newPhoto.category || null,
           sort_order: photos.length,
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
 
-      setPhotos([...photos, data]);
+      if (!response.ok) {
+        throw new Error(result.error || 'Kon foto niet toevoegen');
+      }
+
+      setPhotos([...photos, result.data]);
       setNewPhoto({ url: '', alt: '', category: '' });
       setMessage({ type: 'success', text: 'Foto toegevoegd!' });
     } catch (error: any) {
@@ -120,16 +108,14 @@ export default function AdminGalleryPage() {
     if (!confirm('Weet je zeker dat je deze foto wilt verwijderen?')) return;
 
     try {
-      // Delete from database
-      const { error } = await supabase.from('gallery').delete().eq('id', photo.id);
-      if (error) throw error;
+      const response = await fetch(`/api/admin/gallery?id=${photo.id}`, {
+        method: 'DELETE',
+      });
 
-      // Try to delete from storage if it's a Supabase URL
-      if (photo.url.includes('supabase.co')) {
-        const path = photo.url.split('/gallery/')[1];
-        if (path) {
-          await supabase.storage.from('gallery').remove([path]);
-        }
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Kon foto niet verwijderen');
       }
 
       setPhotos(photos.filter(p => p.id !== photo.id));
@@ -160,14 +146,6 @@ export default function AdminGalleryPage() {
         }`}>
           {message.text}
           <button onClick={() => setMessage(null)} className="ml-2 opacity-70 hover:opacity-100">×</button>
-        </div>
-      )}
-
-      {!bucketExists && (
-        <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-4 mb-8">
-          <p className="text-yellow-300 text-sm">
-            <strong>Storage bucket ontbreekt:</strong> Maak een "gallery" bucket aan in Supabase Dashboard → Storage → New bucket (maak deze public).
-          </p>
         </div>
       )}
 

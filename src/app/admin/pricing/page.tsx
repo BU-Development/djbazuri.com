@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
 
 interface Package {
   id: string;
@@ -22,33 +21,29 @@ export default function AdminPricingPage() {
   const [newFeature, setNewFeature] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   useEffect(() => {
     loadPricing();
   }, []);
 
   async function loadPricing() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('pricing')
-      .select('*')
-      .order('sort_order', { ascending: true });
+    try {
+      const response = await fetch('/api/admin/pricing');
+      const result = await response.json();
 
-    if (error) {
-      console.error('Error loading pricing:', error);
-      // Gebruik default data als tabel niet bestaat
-      setPackages([
-        { id: 'basic', name_nl: 'Basis', name_en: 'Basic', price: 350, duration: '4 uur', features_nl: ['Professionele DJ apparatuur', 'Muziek naar keuze', 'Basis verlichting', 'Spotify playlist integratie'], features_en: ['Professional DJ equipment', 'Music of your choice', 'Basic lighting', 'Spotify playlist integration'], sort_order: 1 },
-        { id: 'premium', name_nl: 'Premium', name_en: 'Premium', price: 550, duration: '6 uur', features_nl: ['Alles van Basis pakket', 'Geavanceerde verlichting', 'Rookmachine', 'Microfoon'], features_en: ['Everything from Basic', 'Advanced lighting', 'Smoke machine', 'Microphone'], sort_order: 2 },
-        { id: 'deluxe', name_nl: 'Deluxe', name_en: 'Deluxe', price: 750, duration: '8 uur', features_nl: ['Alles van Premium pakket', 'Complete licht/geluid', 'DJ booth decoratie', 'Speciale effecten'], features_en: ['Everything from Premium', 'Complete light/sound', 'DJ booth decoration', 'Special effects'], sort_order: 3 },
-      ]);
-      setMessage({ type: 'error', text: 'Database tabel ontbreekt. Voer het setup script uit: node scripts/create-tables.js' });
-    } else {
-      setPackages(data || []);
+      if (!response.ok) {
+        // Gebruik default data als tabel niet bestaat
+        setPackages([
+          { id: 'basic', name_nl: 'Basis', name_en: 'Basic', price: 350, duration: '4 uur', features_nl: ['Professionele DJ apparatuur', 'Muziek naar keuze', 'Basis verlichting', 'Spotify playlist integratie'], features_en: ['Professional DJ equipment', 'Music of your choice', 'Basic lighting', 'Spotify playlist integration'], sort_order: 1 },
+          { id: 'premium', name_nl: 'Premium', name_en: 'Premium', price: 550, duration: '6 uur', features_nl: ['Alles van Basis pakket', 'Geavanceerde verlichting', 'Rookmachine', 'Microfoon'], features_en: ['Everything from Basic', 'Advanced lighting', 'Smoke machine', 'Microphone'], sort_order: 2 },
+          { id: 'deluxe', name_nl: 'Deluxe', name_en: 'Deluxe', price: 750, duration: '8 uur', features_nl: ['Alles van Premium pakket', 'Complete licht/geluid', 'DJ booth decoratie', 'Speciale effecten'], features_en: ['Everything from Premium', 'Complete light/sound', 'DJ booth decoration', 'Special effects'], sort_order: 3 },
+        ]);
+        setMessage({ type: 'error', text: result.error || 'Kon prijzen niet laden' });
+      } else {
+        setPackages(result.data || []);
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Kon prijzen niet laden' });
     }
     setLoading(false);
   }
@@ -58,23 +53,18 @@ export default function AdminPricingPage() {
     setMessage(null);
 
     try {
-      for (const pkg of packages) {
-        const { error } = await supabase
-          .from('pricing')
-          .upsert({
-            id: pkg.id,
-            name_nl: pkg.name_nl,
-            name_en: pkg.name_en,
-            price: pkg.price,
-            duration: pkg.duration,
-            features_nl: pkg.features_nl,
-            features_en: pkg.features_en,
-            sort_order: pkg.sort_order,
-            updated_at: new Date().toISOString(),
-          });
+      const response = await fetch('/api/admin/pricing', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ packages }),
+      });
 
-        if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Kon prijzen niet opslaan');
       }
+
       setMessage({ type: 'success', text: 'Prijzen opgeslagen!' });
     } catch (error: any) {
       console.error('Error saving:', error);
