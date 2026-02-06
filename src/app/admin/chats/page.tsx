@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
 
 type Chat = {
   id: string;
@@ -17,6 +17,8 @@ type Booking = {
   event_name: string;
   event_date: string;
   user_id: string;
+  client_name?: string;
+  client_email?: string;
 };
 
 type ChatsByBooking = {
@@ -28,8 +30,14 @@ type ChatsByBooking = {
 export default function AdminChatsPage() {
   const [chatsByBooking, setChatsByBooking] = useState<ChatsByBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   useEffect(() => {
     loadChats();
@@ -48,76 +56,60 @@ export default function AdminChatsPage() {
   }, []);
 
   async function loadChats() {
-    // Laad alle chats met booking informatie
-    const { data: chatsData } = await supabase
-      .from('chats')
-      .select(`
-        *,
-        bookings:booking_id (
-          id,
-          event_name,
-          event_date,
-          user_id
-        )
-      `)
-      .order('created_at', { ascending: true });
+    try {
+      const response = await fetch('/api/admin/chats');
+      const result = await response.json();
 
-    if (chatsData) {
-      // Groepeer chats per booking
-      const grouped = new Map<string, ChatsByBooking>();
-
-      for (const chat of chatsData as any) {
-        const bookingId = chat.booking_id;
-
-        if (!grouped.has(bookingId)) {
-          // Haal user email op
-          const { data: userData } = await supabase.auth.admin.getUserById(
-            chat.bookings.user_id
-          );
-
-          grouped.set(bookingId, {
-            booking: chat.bookings,
-            chats: [],
-            userEmail: userData?.user?.email,
-          });
-        }
-
-        grouped.get(bookingId)!.chats.push(chat);
+      if (!response.ok) {
+        setError(result.error || 'Kon chats niet laden');
+        return;
       }
 
-      setChatsByBooking(Array.from(grouped.values()));
+      setChatsByBooking(result.data || []);
+      setError(null);
+    } catch (err) {
+      setError('Kon chats niet laden');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
   async function handleReply(bookingId: string) {
     if (!replyMessage.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const response = await fetch('/api/admin/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking_id: bookingId,
+          message: replyMessage,
+        }),
+      });
 
-    await supabase.from('chats').insert({
-      booking_id: bookingId,
-      user_id: user.id,
-      message: replyMessage,
-      is_admin: true,
-    });
+      if (!response.ok) {
+        const result = await response.json();
+        setError(result.error || 'Kon bericht niet versturen');
+        return;
+      }
 
-    // Stuur email naar klant
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'admin_reply',
-        bookingId,
-        message: replyMessage,
-      }),
-    });
+      // Stuur email naar klant
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'admin_reply',
+          bookingId,
+          message: replyMessage,
+        }),
+      });
 
-    setReplyMessage('');
-    setSelectedBooking(null);
-    loadChats();
+      setReplyMessage('');
+      setSelectedBooking(null);
+      loadChats();
+    } catch (err) {
+      setError('Kon bericht niet versturen');
+    }
   }
 
   if (isLoading) {
@@ -127,6 +119,13 @@ export default function AdminChatsPage() {
   return (
     <div>
       <h1 className="text-4xl font-bold mb-8 text-primary">Chat Beheer</h1>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/50 border border-red-600/50 rounded-xl text-red-300">
+          {error}
+        </div>
+      )}
 
       {chatsByBooking.length === 0 ? (
         <div className="text-center text-gray-400 py-8">

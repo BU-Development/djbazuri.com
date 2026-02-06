@@ -1,30 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-
-// Admin emails that are allowed to create users
-const ADMIN_EMAILS = ['boazuri@icloud.com'];
+import { isAdmin } from '@/lib/admin';
 
 export async function POST(request: NextRequest) {
   try {
     // First verify the request is from an admin
-    const cookieStore = cookies();
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-        },
-      }
-    );
-
-    const { data: { user: adminUser } } = await supabaseAuth.auth.getUser();
-
-    if (!adminUser || !ADMIN_EMAILS.includes(adminUser.email || '')) {
+    const adminStatus = await isAdmin();
+    if (!adminStatus) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

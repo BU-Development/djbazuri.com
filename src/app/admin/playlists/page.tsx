@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 type Playlist = {
   id: string;
@@ -9,6 +8,7 @@ type Playlist = {
   spotify_playlist_id: string | null;
   name: string;
   created_at: string;
+  bookings?: Booking;
 };
 
 type Booking = {
@@ -19,9 +19,10 @@ type Booking = {
 };
 
 export default function AdminPlaylistsPage() {
-  const [playlists, setPlaylists] = useState<(Playlist & { booking?: Booking })[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState('');
 
   useEffect(() => {
@@ -29,35 +30,23 @@ export default function AdminPlaylistsPage() {
   }, []);
 
   async function loadData() {
-    // Laad playlists met booking informatie
-    const { data: playlistsData, error: playlistsError } = await supabase
-      .from('playlists')
-      .select(`
-        *,
-        bookings:booking_id (
-          id,
-          event_name,
-          event_date,
-          status
-        )
-      `)
-      .order('created_at', { ascending: false });
+    try {
+      const response = await fetch('/api/admin/playlists');
+      const result = await response.json();
 
-    // Laad alle bookings
-    const { data: bookingsData } = await supabase
-      .from('bookings')
-      .select('*')
-      .order('event_date', { ascending: false });
+      if (!response.ok) {
+        setError(result.error || 'Kon data niet laden');
+        return;
+      }
 
-    if (!playlistsError && playlistsData) {
-      setPlaylists(playlistsData as any);
+      setPlaylists(result.playlists || []);
+      setBookings(result.bookings || []);
+      setError(null);
+    } catch (err) {
+      setError('Kon data niet laden');
+    } finally {
+      setIsLoading(false);
     }
-
-    if (bookingsData) {
-      setBookings(bookingsData);
-    }
-
-    setIsLoading(false);
   }
 
   async function handleCreatePlaylist() {
@@ -69,21 +58,46 @@ export default function AdminPlaylistsPage() {
     const booking = bookings.find(b => b.id === selectedBooking);
     if (!booking) return;
 
-    await supabase
-      .from('playlists')
-      .insert({
-        booking_id: selectedBooking,
-        name: `${booking.event_name} Playlist`,
+    try {
+      const response = await fetch('/api/admin/playlists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking_id: selectedBooking,
+          name: `${booking.event_name} Playlist`,
+        }),
       });
 
-    setSelectedBooking('');
-    loadData();
+      if (!response.ok) {
+        const result = await response.json();
+        setError(result.error || 'Kon playlist niet aanmaken');
+        return;
+      }
+
+      setSelectedBooking('');
+      loadData();
+    } catch (err) {
+      setError('Kon playlist niet aanmaken');
+    }
   }
 
   async function handleDelete(id: string) {
     if (confirm('Weet je zeker dat je deze playlist wilt verwijderen?')) {
-      await supabase.from('playlists').delete().eq('id', id);
-      loadData();
+      try {
+        const response = await fetch(`/api/admin/playlists?id=${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          const result = await response.json();
+          setError(result.error || 'Kon playlist niet verwijderen');
+          return;
+        }
+
+        loadData();
+      } catch (err) {
+        setError('Kon playlist niet verwijderen');
+      }
     }
   }
 
@@ -99,6 +113,13 @@ export default function AdminPlaylistsPage() {
   return (
     <div>
       <h1 className="text-4xl font-bold mb-8 text-primary">Playlist Beheer</h1>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/50 border border-red-600/50 rounded-xl text-red-300">
+          {error}
+        </div>
+      )}
 
       {/* Create Playlist */}
       <div className="bg-dark-50 border border-primary/20 rounded-xl p-6 mb-8">
@@ -132,14 +153,14 @@ export default function AdminPlaylistsPage() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2">{playlist.name}</h3>
-                {playlist.booking && (
+                {playlist.bookings && (
                   <div className="text-sm text-gray-400 space-y-1">
-                    <p>Event: {(playlist.booking as any).event_name}</p>
+                    <p>Event: {playlist.bookings.event_name}</p>
                     <p>
                       Datum:{' '}
-                      {new Date((playlist.booking as any).event_date).toLocaleDateString('nl-NL')}
+                      {new Date(playlist.bookings.event_date).toLocaleDateString('nl-NL')}
                     </p>
-                    <p>Status: {(playlist.booking as any).status}</p>
+                    <p>Status: {playlist.bookings.status}</p>
                   </div>
                 )}
                 {playlist.spotify_playlist_id && (

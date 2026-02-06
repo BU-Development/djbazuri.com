@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
 
 type Booking = {
   id: string;
@@ -19,6 +18,7 @@ type Booking = {
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
   const [generatedCredentials, setGeneratedCredentials] = useState<{
@@ -36,41 +36,47 @@ export default function AdminBookingsPage() {
     client_email: '',
   });
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   useEffect(() => {
     loadBookings();
   }, []);
 
   async function loadBookings() {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .order('event_date', { ascending: true });
+    try {
+      const response = await fetch('/api/admin/bookings');
+      const result = await response.json();
 
-    if (!error && data) {
-      setBookings(data);
+      if (!response.ok) {
+        setError(result.error || 'Kon boekingen niet laden');
+        return;
+      }
+
+      setBookings(result.data || []);
+      setError(null);
+    } catch (err) {
+      setError('Kon boekingen niet laden');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   async function handleCreateBooking(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
 
-    const { error } = await supabase.from('bookings').insert({
-      event_name: newBooking.event_name,
-      event_date: newBooking.event_date,
-      package_type: newBooking.package_type,
-      status: newBooking.status,
-      notes: newBooking.notes,
-      client_name: newBooking.client_name || null,
-      client_email: newBooking.client_email || null,
-    });
+    try {
+      const response = await fetch('/api/admin/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBooking),
+      });
 
-    if (!error) {
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || 'Kon boeking niet aanmaken');
+        return;
+      }
+
       setNewBooking({
         event_name: '',
         event_date: '',
@@ -82,18 +88,48 @@ export default function AdminBookingsPage() {
       });
       setShowForm(false);
       loadBookings();
+    } catch (err) {
+      setError('Er is een fout opgetreden');
     }
   }
 
   async function handleStatusChange(id: string, status: string) {
-    await supabase.from('bookings').update({ status }).eq('id', id);
-    loadBookings();
+    try {
+      const response = await fetch('/api/admin/bookings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        setError(result.error || 'Kon status niet bijwerken');
+        return;
+      }
+
+      loadBookings();
+    } catch (err) {
+      setError('Kon status niet bijwerken');
+    }
   }
 
   async function handleDelete(id: string) {
     if (confirm('Weet je zeker dat je deze boeking wilt verwijderen?')) {
-      await supabase.from('bookings').delete().eq('id', id);
-      loadBookings();
+      try {
+        const response = await fetch(`/api/admin/bookings?id=${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          const result = await response.json();
+          setError(result.error || 'Kon boeking niet verwijderen');
+          return;
+        }
+
+        loadBookings();
+      } catch (err) {
+        setError('Kon boeking niet verwijderen');
+      }
     }
   }
 
@@ -149,8 +185,23 @@ export default function AdminBookingsPage() {
   }
 
   async function handleUpdateClientInfo(bookingId: string, field: string, value: string) {
-    await supabase.from('bookings').update({ [field]: value }).eq('id', bookingId);
-    loadBookings();
+    try {
+      const response = await fetch('/api/admin/bookings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: bookingId, [field]: value }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        setError(result.error || 'Kon klantinfo niet bijwerken');
+        return;
+      }
+
+      loadBookings();
+    } catch (err) {
+      setError('Kon klantinfo niet bijwerken');
+    }
   }
 
   function generateCalendarUrl(booking: Booking) {
@@ -214,6 +265,13 @@ END:VCALENDAR`;
 
   return (
     <div>
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/50 border border-red-600/50 rounded-xl text-red-300">
+          {error}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-purple-500">Boekingen Beheer</h1>
         <button

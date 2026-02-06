@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 type Link = {
   id: string;
@@ -15,6 +14,7 @@ type Link = {
 export default function AdminLinksPage() {
   const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -28,54 +28,95 @@ export default function AdminLinksPage() {
   }, []);
 
   async function loadLinks() {
-    const { data, error } = await supabase
-      .from('links')
-      .select('*')
-      .order('order', { ascending: true });
+    try {
+      const response = await fetch('/api/admin/links');
+      const result = await response.json();
 
-    if (!error && data) {
-      setLinks(data);
+      if (!response.ok) {
+        setError(result.error || 'Kon links niet laden');
+        return;
+      }
+
+      setLinks(result.data || []);
+      setError(null);
+    } catch (err) {
+      setError('Kon links niet laden');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
 
-    if (editingId) {
-      // Update bestaande link
-      await supabase
-        .from('links')
-        .update({
-          title: formData.title,
-          url: formData.url,
-          icon: formData.icon || null,
-          visible: formData.visible,
-        })
-        .eq('id', editingId);
-    } else {
-      // Voeg nieuwe link toe
-      const maxOrder = links.length > 0 ? Math.max(...links.map(l => l.order)) : 0;
-      await supabase
-        .from('links')
-        .insert({
-          title: formData.title,
-          url: formData.url,
-          icon: formData.icon || null,
-          order: maxOrder + 1,
-          visible: formData.visible,
+    try {
+      if (editingId) {
+        // Update bestaande link
+        const response = await fetch('/api/admin/links', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingId,
+            title: formData.title,
+            url: formData.url,
+            icon: formData.icon || null,
+            visible: formData.visible,
+          }),
         });
-    }
 
-    setFormData({ title: '', url: '', icon: '', visible: true });
-    setEditingId(null);
-    loadLinks();
+        const result = await response.json();
+        if (!response.ok) {
+          setError(result.error || 'Kon link niet bijwerken');
+          return;
+        }
+      } else {
+        // Voeg nieuwe link toe
+        const maxOrder = links.length > 0 ? Math.max(...links.map(l => l.order)) : 0;
+        const response = await fetch('/api/admin/links', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: formData.title,
+            url: formData.url,
+            icon: formData.icon || null,
+            order: maxOrder + 1,
+            visible: formData.visible,
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          setError(result.error || 'Kon link niet toevoegen');
+          return;
+        }
+      }
+
+      setFormData({ title: '', url: '', icon: '', visible: true });
+      setEditingId(null);
+      loadLinks();
+    } catch (err) {
+      setError('Er is een fout opgetreden');
+    }
   }
 
   async function handleDelete(id: string) {
     if (confirm('Weet je zeker dat je deze link wilt verwijderen?')) {
-      await supabase.from('links').delete().eq('id', id);
-      loadLinks();
+      try {
+        const response = await fetch(`/api/admin/links?id=${id}`, {
+          method: 'DELETE',
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          setError(result.error || 'Kon link niet verwijderen');
+          return;
+        }
+
+        loadLinks();
+      } catch (err) {
+        setError('Kon link niet verwijderen');
+      }
     }
   }
 
@@ -102,10 +143,14 @@ export default function AdminLinksPage() {
 
     // Update orders
     for (let i = 0; i < newLinks.length; i++) {
-      await supabase
-        .from('links')
-        .update({ order: i })
-        .eq('id', newLinks[i].id);
+      await fetch('/api/admin/links', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newLinks[i].id,
+          order: i,
+        }),
+      });
     }
 
     loadLinks();
@@ -118,6 +163,13 @@ export default function AdminLinksPage() {
   return (
     <div>
       <h1 className="text-4xl font-bold mb-8 text-primary">Linktree Beheer</h1>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/50 border border-red-600/50 rounded-xl text-red-300">
+          {error}
+        </div>
+      )}
 
       {/* Form */}
       <div className="bg-dark-50 border border-primary/20 rounded-xl p-6 mb-8">

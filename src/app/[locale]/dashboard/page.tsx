@@ -7,6 +7,11 @@ import { createBrowserClient } from '@supabase/ssr';
 import AuthGuard from '@/components/AuthGuard';
 import BookingChat from '@/components/BookingChat';
 
+interface Track {
+  id: string;
+  priority: 'must_have' | 'normal' | 'blacklist';
+}
+
 function DashboardContent({ locale }: { locale: string }) {
   const t = useTranslations('dashboard');
   const [booking, setBooking] = useState<any>(null);
@@ -14,6 +19,7 @@ function DashboardContent({ locale }: { locale: string }) {
   const [user, setUser] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ eventName: '', eventDate: '' });
+  const [trackCounts, setTrackCounts] = useState({ mustHave: 0, normal: 0, blacklist: 0 });
 
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -30,6 +36,21 @@ function DashboardContent({ locale }: { locale: string }) {
     // Load event details from localStorage
     const savedEventName = localStorage.getItem('event_name') || '';
     const savedEventDate = localStorage.getItem('event_date') || '';
+
+    // Load playlist tracks from localStorage
+    const savedTracks = localStorage.getItem('playlist_tracks');
+    if (savedTracks) {
+      try {
+        const tracks: Track[] = JSON.parse(savedTracks);
+        setTrackCounts({
+          mustHave: tracks.filter(t => t.priority === 'must_have').length,
+          normal: tracks.filter(t => t.priority === 'normal').length,
+          blacklist: tracks.filter(t => t.priority === 'blacklist').length,
+        });
+      } catch (e) {
+        // Invalid JSON, ignore
+      }
+    }
 
     setBooking({
       eventName: savedEventName || 'Mijn Event',
@@ -225,15 +246,15 @@ function DashboardContent({ locale }: { locale: string }) {
 
           <div className="grid md:grid-cols-3 gap-4 mb-6">
             <div className="bg-green-600/20 border border-green-600/30 p-4 rounded-lg text-center">
-              <div className="text-3xl font-bold text-green-400 mb-1">0</div>
+              <div className="text-3xl font-bold text-green-400 mb-1">{trackCounts.mustHave}</div>
               <p className="text-sm text-gray-400">Must-Have Nummers</p>
             </div>
             <div className="bg-blue-600/20 border border-blue-600/30 p-4 rounded-lg text-center">
-              <div className="text-3xl font-bold text-blue-400 mb-1">0</div>
+              <div className="text-3xl font-bold text-blue-400 mb-1">{trackCounts.normal}</div>
               <p className="text-sm text-gray-400">Normale Nummers</p>
             </div>
             <div className="bg-red-600/20 border border-red-600/30 p-4 rounded-lg text-center">
-              <div className="text-3xl font-bold text-red-400 mb-1">0</div>
+              <div className="text-3xl font-bold text-red-400 mb-1">{trackCounts.blacklist}</div>
               <p className="text-sm text-gray-400">Blacklist Nummers</p>
             </div>
           </div>

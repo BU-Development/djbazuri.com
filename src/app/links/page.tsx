@@ -1,5 +1,4 @@
-import { supabase } from '@/lib/supabase';
-import Image from 'next/image';
+import { getAdminSupabase } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,13 +6,19 @@ export default async function LinksPage() {
   let links: any[] = [];
 
   try {
-    const { data } = await supabase
+    const supabase = getAdminSupabase();
+    const { data, error } = await supabase
       .from('links')
       .select('*')
       .eq('visible', true)
       .order('order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching links:', error);
+    }
     links = data || [];
-  } catch {
+  } catch (err) {
+    console.error('Links fetch error:', err);
     links = [];
   }
 
