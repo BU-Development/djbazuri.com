@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         .select()
         .single();
 
-      if (createError) {
+      if (createError || !newBooking) {
         console.error('Error creating booking:', createError);
         return NextResponse.json({ error: 'Could not create booking' }, { status: 500 });
       }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
           .select()
           .single();
 
-        if (createError) {
+        if (createError || !newBooking) {
           console.error('Error creating booking:', createError);
           return NextResponse.json({ error: 'Could not create booking' }, { status: 500 });
         }
