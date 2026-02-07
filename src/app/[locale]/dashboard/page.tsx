@@ -269,7 +269,7 @@ function DashboardContent({ locale }: { locale: string }) {
 
         {/* Chat Component */}
         <div className="mb-8">
-          <BookingChat bookingId="demo-booking-id" />
+          <BookingChat />
         </div>
 
         <div className="mt-6 bg-zinc-900 border border-purple-500/20 rounded-lg p-6">

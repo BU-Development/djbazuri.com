@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { useEffect, useState, useRef } from 'react';
 
 type Chat = {
   id: string;
@@ -10,79 +9,47 @@ type Chat = {
   created_at: string;
 };
 
-export default function BookingChat({ bookingId }: { bookingId: string }) {
+export default function BookingChat({ bookingId: initialBookingId }: { bookingId?: string }) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const [bookingId, setBookingId] = useState<string | null>(initialBookingId || null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    initChat();
-  }, [bookingId]);
+    loadChats();
+    // Poll for new messages every 10 seconds
+    const interval = setInterval(loadChats, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
-  async function initChat() {
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+  useEffect(() => {
+    // Scroll to bottom when new messages arrive
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chats]);
 
-    if (!user) {
-      setError('Je moet ingelogd zijn om berichten te sturen.');
-      setIsLoading(false);
-      return;
-    }
-
-    setUserId(user.id);
-
-    // Use user.id as the booking_id for now (since we don't have real bookings yet)
-    const chatBookingId = bookingId === 'demo-booking-id' ? user.id : bookingId;
-
-    await loadChats(chatBookingId);
-
-    // Realtime updates
-    const subscription = supabase
-      .channel(`booking-${chatBookingId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chats',
-          filter: `booking_id=eq.${chatBookingId}`,
-        },
-        () => {
-          loadChats(chatBookingId);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }
-
-  async function loadChats(chatBookingId: string) {
+  async function loadChats() {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('chats')
-        .select('*')
-        .eq('booking_id', chatBookingId)
-        .order('created_at', { ascending: true });
+      const response = await fetch('/api/chat');
+      const result = await response.json();
 
-      if (fetchError) {
-        console.error('Error loading chats:', fetchError);
-        // Table might not exist yet, that's ok
-        if (fetchError.code === '42P01') {
-          setError('Chat tabel bestaat nog niet. Maak de tabel aan in Supabase.');
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Je moet ingelogd zijn om berichten te sturen.');
+        } else {
+          console.error('Error loading chats:', result.error);
         }
-      } else if (data) {
-        setChats(data);
+        setIsLoading(false);
+        return;
       }
+
+      setChats(result.data || []);
+      if (result.bookingId) {
+        setBookingId(result.bookingId);
+      }
+      setError(null);
     } catch (err) {
       console.error('Error loading chats:', err);
     }
@@ -90,26 +57,36 @@ export default function BookingChat({ bookingId }: { bookingId: string }) {
   }
 
   async function handleSend() {
-    if (!message.trim() || isSending || !userId) return;
+    if (!message.trim() || isSending) return;
 
     setIsSending(true);
-
-    const chatBookingId = bookingId === 'demo-booking-id' ? userId : bookingId;
+    setError(null);
 
     try {
-      const { error: insertError } = await supabase.from('chats').insert({
-        booking_id: chatBookingId,
-        user_id: userId,
-        message: message.trim(),
-        is_admin: false,
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message.trim(),
+          bookingId: bookingId,
+        }),
       });
 
-      if (insertError) {
-        console.error('Error sending message:', insertError);
-        setError('Kon bericht niet versturen. Probeer het opnieuw.');
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Je moet ingelogd zijn om berichten te sturen.');
+        } else {
+          setError('Kon bericht niet versturen. Probeer het opnieuw.');
+        }
       } else {
         setMessage('');
-        await loadChats(chatBookingId);
+        if (result.bookingId) {
+          setBookingId(result.bookingId);
+        }
+        // Reload chats to get the new message
+        await loadChats();
       }
     } catch (err) {
       console.error('Error sending message:', err);
@@ -122,12 +99,18 @@ export default function BookingChat({ bookingId }: { bookingId: string }) {
   if (isLoading) {
     return (
       <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-6">
-        <div className="text-center text-gray-400">Laden...</div>
+        <h3 className="text-2xl font-semibold mb-4 text-purple-500">
+          Chat met DJ Bazuri
+        </h3>
+        <div className="text-center text-gray-400 py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+          Laden...
+        </div>
       </div>
     );
   }
 
-  if (error && !userId) {
+  if (error && !bookingId) {
     return (
       <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-6">
         <h3 className="text-2xl font-semibold mb-4 text-purple-500">
@@ -181,6 +164,7 @@ export default function BookingChat({ bookingId }: { bookingId: string }) {
             </div>
           ))
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
