@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const adminSupabase = getAdminSupabase();
 
     // First, find or create a booking for this user
-    let { data: booking, error: bookingError } = await adminSupabase
+    const { data: existingBooking, error: bookingError } = await adminSupabase
       .from('bookings')
       .select('id')
       .eq('user_id', user.id)
@@ -41,7 +41,9 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .single();
 
-    if (bookingError || !booking) {
+    let bookingId: string;
+
+    if (bookingError || !existingBooking) {
       // No booking exists, create a default one
       const { data: newBooking, error: createError } = await adminSupabase
         .from('bookings')
@@ -60,11 +62,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Could not create booking' }, { status: 500 });
       }
 
-      booking = newBooking;
+      bookingId = newBooking.id;
+    } else {
+      bookingId = existingBooking.id;
     }
-
-    // At this point booking is guaranteed to be non-null
-    const bookingId = booking.id;
 
     // Load chats for this booking
     const { data: chats, error: chatsError } = await adminSupabase
@@ -108,11 +109,11 @@ export async function POST(request: NextRequest) {
     const adminSupabase = getAdminSupabase();
 
     // Verify the booking exists and belongs to this user
-    let finalBookingId = bookingId;
+    let finalBookingId: string;
 
-    if (!finalBookingId) {
+    if (!bookingId) {
       // Find or create booking for this user
-      let { data: booking, error: bookingError } = await adminSupabase
+      const { data: existingBooking, error: bookingError } = await adminSupabase
         .from('bookings')
         .select('id')
         .eq('user_id', user.id)
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .single();
 
-      if (bookingError || !booking) {
+      if (bookingError || !existingBooking) {
         // Create a default booking
         const { data: newBooking, error: createError } = await adminSupabase
           .from('bookings')
@@ -139,24 +140,24 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Could not create booking' }, { status: 500 });
         }
 
-        // At this point newBooking is guaranteed to be non-null
         finalBookingId = newBooking.id;
       } else {
-        // At this point booking is guaranteed to be non-null
-        finalBookingId = booking.id;
+        finalBookingId = existingBooking.id;
       }
     } else {
       // Verify the provided booking belongs to this user
-      const { data: booking, error: verifyError } = await adminSupabase
+      const { data: verifyBooking, error: verifyError } = await adminSupabase
         .from('bookings')
         .select('id')
-        .eq('id', finalBookingId)
+        .eq('id', bookingId)
         .eq('user_id', user.id)
         .single();
 
-      if (verifyError || !booking) {
+      if (verifyError || !verifyBooking) {
         return NextResponse.json({ error: 'Invalid booking' }, { status: 403 });
       }
+
+      finalBookingId = bookingId;
     }
 
     // Insert the chat message
