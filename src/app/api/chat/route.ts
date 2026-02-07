@@ -63,11 +63,14 @@ export async function GET(request: NextRequest) {
       booking = newBooking;
     }
 
+    // At this point booking is guaranteed to be non-null
+    const bookingId = booking.id;
+
     // Load chats for this booking
     const { data: chats, error: chatsError } = await adminSupabase
       .from('chats')
       .select('*')
-      .eq('booking_id', booking.id)
+      .eq('booking_id', bookingId)
       .order('created_at', { ascending: true });
 
     if (chatsError) {
@@ -77,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: chats || [],
-      bookingId: booking.id
+      bookingId: bookingId
     });
   } catch (error) {
     console.error('Error in GET /api/chat:', error);
@@ -136,10 +139,12 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Could not create booking' }, { status: 500 });
         }
 
-        booking = newBooking;
+        // At this point newBooking is guaranteed to be non-null
+        finalBookingId = newBooking.id;
+      } else {
+        // At this point booking is guaranteed to be non-null
+        finalBookingId = booking.id;
       }
-
-      finalBookingId = booking.id;
     } else {
       // Verify the provided booking belongs to this user
       const { data: booking, error: verifyError } = await adminSupabase
