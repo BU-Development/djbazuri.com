@@ -1,25 +1,10 @@
-# 📸 Images Folder
+# Images
 
-Plaats hier je foto's voor de website.
+Zet hier je afbeeldingen neer:
 
-## Benodigde Foto's
+- `logo.png` / `logo.svg` — DJ Bazuri logo (gebruikt op de site)
+- `favicon.ico` / `favicon.png` — Favicon (zet in `/public/` root voor Next.js)
+- `spotify-cover.jpg` — Cover afbeelding voor Spotify playlists (aanbevolen: 640x640px)
+- `og-image.jpg` — Open Graph afbeelding voor social media previews (aanbevolen: 1200x630px)
 
-### Verplicht
-- **profile.jpg** - Je profiel foto voor de /links pagina (512x512px)
-
-### Optioneel
-- **hero-bg.jpg** - Achtergrond voor de homepage hero sectie (1920x1080px)
-- **logo.png** - Je DJ logo (200x200px, transparant)
-- **gallery/** - Folder met foto's voor de gallery pagina
-
-## Snelle Start
-
-1. Voeg `profile.jpg` toe aan deze folder
-2. Maak een `gallery` subfolder en voeg event foto's toe
-3. Zie `FOTO_PLAATSING.md` in de root voor uitgebreide instructies
-
-## Tips
-
-- Comprimeer je foto's met https://tinypng.com
-- Gebruik JPG voor foto's, PNG voor logo's
-- Houd bestandsgroottes onder 1MB voor snelle laadtijden
+Na het uploaden van `favicon.ico` verplaats je het naar `/public/favicon.ico`.
