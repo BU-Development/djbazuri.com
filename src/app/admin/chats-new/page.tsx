@@ -80,28 +80,37 @@ export default function AdminChatsPage() {
       const data = await response.json();
 
       if (response.ok) {
+        const bookingList: Booking[] = data.data || data;
         // Load last message for each booking
         const bookingsWithMessages = await Promise.all(
-          data.map(async (booking: Booking) => {
+          bookingList.map(async (booking: Booking) => {
             const chatsRes = await fetch(`/api/admin/chats?booking_id=${booking.id}`);
             const chatsData = await chatsRes.json();
             const chats = chatsData.chats || [];
             const lastChat = chats[chats.length - 1];
 
             // Count unread messages (customer messages that came after the last admin message)
-            const lastAdminMessageIndex = chats.reverse().findIndex((c: Chat) => c.is_admin);
+            const reversed = [...chats].reverse();
+            const lastAdminMessageIndex = reversed.findIndex((c: Chat) => c.is_admin);
             const unreadCount = lastAdminMessageIndex === -1
-              ? chats.filter((c: Chat) => !c.is_admin).length
+              ? reversed.filter((c: Chat) => !c.is_admin).length
               : lastAdminMessageIndex;
 
             return {
               ...booking,
-              lastMessage: lastChat?.message || 'Nog geen berichten',
+              lastMessage: lastChat?.message || null,
               lastMessageTime: lastChat?.created_at,
               unreadCount: unreadCount,
             };
           })
         );
+
+        // Sort: unread first, then with messages, then no messages
+        bookingsWithMessages.sort((a, b) => {
+          if ((a.unreadCount ?? 0) !== (b.unreadCount ?? 0)) return (b.unreadCount ?? 0) - (a.unreadCount ?? 0);
+          if (!!a.lastMessage !== !!b.lastMessage) return a.lastMessage ? -1 : 1;
+          return 0;
+        });
 
         setBookings(bookingsWithMessages);
       }
@@ -177,6 +186,7 @@ export default function AdminChatsPage() {
           <div className="w-1/3 bg-zinc-900 border border-purple-500/20 rounded-lg overflow-hidden flex flex-col">
             <div className="p-4 border-b border-purple-500/20">
               <h2 className="text-lg font-semibold text-white">Gesprekken</h2>
+              <p className="text-xs text-gray-500 mt-1">{bookings.length} boekingen</p>
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -185,40 +195,50 @@ export default function AdminChatsPage() {
                   Geen bookings gevonden
                 </div>
               ) : (
-                bookings.map((booking) => (
-                  <button
-                    key={booking.id}
-                    onClick={() => setSelectedBooking(booking)}
-                    className={`w-full p-4 border-b border-zinc-800 text-left hover:bg-zinc-800 transition-colors ${
-                      selectedBooking?.id === booking.id ? 'bg-zinc-800' : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <h3 className="font-semibold text-white truncate">
-                          {booking.event_name}
-                        </h3>
-                        {(booking.unreadCount ?? 0) > 0 && (
-                          <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-purple-600 rounded-full">
-                            {booking.unreadCount}
+                bookings.map((booking) => {
+                  const hasMessages = !!booking.lastMessage;
+                  const hasUnread = (booking.unreadCount ?? 0) > 0;
+                  return (
+                    <button
+                      key={booking.id}
+                      onClick={() => setSelectedBooking(booking)}
+                      className={`w-full p-4 border-b border-zinc-800 text-left hover:bg-zinc-800 transition-colors ${
+                        selectedBooking?.id === booking.id ? 'bg-zinc-800' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <h3 className="font-semibold text-white truncate text-sm">
+                            {booking.event_name}
+                          </h3>
+                          {hasUnread && (
+                            <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-purple-600 rounded-full">
+                              {booking.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        {booking.lastMessageTime && (
+                          <span className="text-xs text-gray-500 ml-2 shrink-0">
+                            {new Date(booking.lastMessageTime).toLocaleDateString('nl-NL', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
                           </span>
                         )}
                       </div>
-                      {booking.lastMessageTime && (
-                        <span className="text-xs text-gray-500 ml-2 shrink-0">
-                          {new Date(booking.lastMessageTime).toLocaleDateString('nl-NL', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}
-                        </span>
+                      <p className="text-xs text-gray-500 mb-1 truncate">{booking.client_email || '—'}</p>
+                      {hasMessages ? (
+                        <p className={`text-xs truncate ${hasUnread ? 'text-white font-medium' : 'text-gray-500'}`}>
+                          {booking.lastMessage}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-purple-400/70 italic">
+                          + Nieuw gesprek starten
+                        </p>
                       )}
-                    </div>
-                    <p className="text-sm text-gray-400 mb-1">{booking.client_email}</p>
-                    <p className={`text-sm truncate ${(booking.unreadCount ?? 0) > 0 ? 'text-white font-medium' : 'text-gray-500'}`}>
-                      {booking.lastMessage}
-                    </p>
-                  </button>
-                ))
+                    </button>
+                  );
+                })
               )}
             </div>
           </div>
@@ -246,7 +266,9 @@ export default function AdminChatsPage() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {chats.length === 0 ? (
                     <div className="text-center text-gray-400 py-8">
-                      Nog geen berichten. Start een gesprek!
+                      <div className="text-4xl mb-3">💬</div>
+                      <p className="font-medium text-gray-300 mb-1">Nog geen berichten</p>
+                      <p className="text-sm">Typ hieronder om het eerste bericht te sturen.</p>
                     </div>
                   ) : (
                     chats.map((chat) => (
