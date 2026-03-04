@@ -232,4 +232,6 @@ Meer informatie: [djbazuri.com/nl/privacy](https://djbazuri.com/nl/privacy)
 
 ## Licentie
 
-Open source — zie [LICENSE](LICENSE) voor de licentievoorwaarden.
+© 2026 DJ Bazuri (BU Development) — Alle rechten voorbehouden.
+
+De broncode is openbaar beschikbaar voor transparantie en educatieve doeleinden. Kopiëren, gebruiken of distribueren van deze code is **niet** toegestaan zonder expliciete toestemming. Zie [LICENSE](LICENSE) voor de volledige voorwaarden.
