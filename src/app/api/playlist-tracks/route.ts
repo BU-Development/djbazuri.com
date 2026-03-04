@@ -74,10 +74,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Could not load tracks' }, { status: 500 });
     }
 
+    // Load booking info (event name/date) for the playlist page
+    const { data: booking } = await adminSupabase
+      .from('bookings')
+      .select('event_name, event_date')
+      .eq('id', bookingId)
+      .single();
+
     return NextResponse.json({
       playlistId: playlist.id,
       spotifyPlaylistId: (playlist as any).spotify_playlist_id,
       tracks: tracks || [],
+      eventName: booking?.event_name || '',
+      eventDate: booking?.event_date || '',
     });
   } catch (error) {
     console.error('Error in GET /api/playlist-tracks:', error);

@@ -3,18 +3,24 @@ import { getAdminSupabase } from '@/lib/supabase-admin';
 import { isAdmin } from '@/lib/admin';
 import { sendStatusUpdateEmail } from '@/lib/email';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const adminStatus = await isAdmin();
     if (!adminStatus) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
     const supabase = getAdminSupabase();
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .order('event_date', { ascending: true });
+    let query = supabase.from('bookings').select('*');
+    if (id) {
+      query = query.eq('id', id);
+    } else {
+      query = query.order('event_date', { ascending: true });
+    }
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching bookings:', error);

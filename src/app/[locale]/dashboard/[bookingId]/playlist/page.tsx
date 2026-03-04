@@ -40,21 +40,13 @@ function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: str
 
   async function loadPlaylistData() {
     try {
-      // Load booking details
-      const bookingRes = await fetch(`/api/admin/bookings?id=${bookingId}`);
-      if (bookingRes.ok) {
-        const bookingData = await bookingRes.json();
-        const booking = bookingData.data?.[0];
-        if (booking) {
-          setEventName(booking.event_name);
-          setEventDate(booking.event_date);
-        }
-      }
-
-      // Load playlist tracks from new API
+      // Load playlist tracks + booking info from single API (no auth required)
       const tracksRes = await fetch(`/api/playlist-tracks?booking_id=${bookingId}`);
       if (tracksRes.ok) {
         const data = await tracksRes.json();
+
+        if (data.eventName) setEventName(data.eventName);
+        if (data.eventDate) setEventDate(data.eventDate);
 
         if (data.spotifyPlaylistId) {
           setPlaylistId(data.spotifyPlaylistId);
