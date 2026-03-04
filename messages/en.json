@@ -131,7 +131,7 @@
     "playlist": {
       "title": "Create Your Playlist",
       "button": "Go to Playlist",
-      "search": "Search for songs",
+      "backToDashboard": "Back to dashboard",
       "searching": "Searching...",
       "noResults": "No results found",
       "mustHave": "Must-Have",
@@ -143,7 +143,24 @@
       "syncChanges": "Sync Changes",
       "playlistCreated": "Playlist created successfully!",
       "playlistUpdated": "Playlist updated successfully!",
-      "viewOnSpotify": "View on Spotify"
+      "viewOnSpotify": "View on Spotify",
+      "search": {
+        "title": "Search for songs"
+      },
+      "stats": {
+        "title": "Playlist Overview",
+        "mustHave": "Must-Have",
+        "normal": "Normal",
+        "blacklist": "Blacklist"
+      },
+      "lists": {
+        "mustHave": "Must-Have Tracks",
+        "normal": "Normal Tracks",
+        "blacklist": "Blacklisted",
+        "emptyMustHave": "No must-have tracks yet",
+        "emptyNormal": "No tracks yet",
+        "emptyBlacklist": "No blacklisted tracks"
+      }
     }
   },
   "common": {

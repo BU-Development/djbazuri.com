@@ -131,7 +131,7 @@
     "playlist": {
       "title": "Maak Je Playlist",
       "button": "Ga naar Playlist",
-      "search": "Zoek naar liedjes",
+      "backToDashboard": "Terug naar dashboard",
       "searching": "Zoeken...",
       "noResults": "Geen resultaten gevonden",
       "mustHave": "Must-Have",
@@ -143,7 +143,24 @@
       "syncChanges": "Synchroniseer Wijzigingen",
       "playlistCreated": "Playlist succesvol aangemaakt!",
       "playlistUpdated": "Playlist succesvol bijgewerkt!",
-      "viewOnSpotify": "Bekijk op Spotify"
+      "viewOnSpotify": "Bekijk op Spotify",
+      "search": {
+        "title": "Zoek naar liedjes"
+      },
+      "stats": {
+        "title": "Playlist Overzicht",
+        "mustHave": "Must-Have",
+        "normal": "Normaal",
+        "blacklist": "Niet Gewenst"
+      },
+      "lists": {
+        "mustHave": "Must-Have Nummers",
+        "normal": "Normale Nummers",
+        "blacklist": "Niet Gewenst",
+        "emptyMustHave": "Nog geen must-have nummers",
+        "emptyNormal": "Nog geen nummers",
+        "emptyBlacklist": "Geen geblokkeerde nummers"
+      }
     }
   },
   "common": {
