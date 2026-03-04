@@ -2,9 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import TrackSearch from '@/components/TrackSearch';
 import TrackList from '@/components/TrackList';
-import Link from 'next/link';
 
 interface SearchTrack {
   id: string;
@@ -25,6 +25,7 @@ type Params = {
 
 function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: string }) {
   const t = useTranslations('dashboard.playlist');
+  const router = useRouter();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlistId, setPlaylistId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -193,12 +194,12 @@ function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: str
     <div className="min-h-screen bg-black py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <Link
-            href={`/${locale}/dashboard`}
+          <button
+            onClick={() => router.back()}
             className="text-purple-400 hover:text-purple-300 mb-4 inline-block"
           >
             ← {t('backToDashboard')}
-          </Link>
+          </button>
           <h1 className="text-4xl font-bold text-white mb-2">{t('title')}</h1>
           <p className="text-xl text-gray-400">
             {eventName} - {new Date(eventDate).toLocaleDateString('nl-NL')}

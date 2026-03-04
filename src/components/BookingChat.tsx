@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 
 type Chat = {
   id: string;
@@ -20,10 +21,37 @@ export default function BookingChat({ bookingId: initialBookingId }: { bookingId
 
   useEffect(() => {
     loadChats();
-    // Poll for new messages every 10 seconds
-    const interval = setInterval(loadChats, 10000);
-    return () => clearInterval(interval);
-  }, []);
+
+    // Set up real-time subscription
+    if (bookingId) {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      const channel = supabase
+        .channel(`chats-${bookingId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'chats',
+            filter: `booking_id=eq.${bookingId}`,
+          },
+          (payload) => {
+            console.log('Real-time chat update:', payload);
+            // Reload chats when there's any change
+            loadChats();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [bookingId]);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -46,7 +74,7 @@ export default function BookingChat({ bookingId: initialBookingId }: { bookingId
       }
 
       setChats(result.data || []);
-      if (result.bookingId) {
+      if (result.bookingId && !bookingId) {
         setBookingId(result.bookingId);
       }
       setError(null);

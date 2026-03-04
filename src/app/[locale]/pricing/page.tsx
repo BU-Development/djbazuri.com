@@ -74,7 +74,7 @@ export default function PricingPage({ params: { locale } }: { params: { locale: 
                 </ul>
 
                 <Link
-                  href={`/${locale}/auth/signup?package=${pkg.key}`}
+                  href={`/${locale}/contact`}
                   className={`block w-full text-center py-3 rounded-lg font-semibold transition-colors ${
                     pkg.featured
                       ? 'bg-purple-600 text-white hover:bg-purple-700'

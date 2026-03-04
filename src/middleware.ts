@@ -10,8 +10,8 @@ const intlMiddleware = createMiddleware({
 export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Skip intl middleware voor admin en toegang routes
-  if (pathname.startsWith('/admin') || pathname.startsWith('/toegang')) {
+  // Skip intl middleware voor admin, admin-login en toegang routes
+  if (pathname.startsWith('/admin') || pathname === '/admin-login' || pathname.startsWith('/toegang')) {
     return NextResponse.next();
   }
 
