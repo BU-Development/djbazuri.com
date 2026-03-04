@@ -265,25 +265,22 @@ function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: str
           <TrackList
             title={t('lists.mustHave')}
             tracks={mustHaveTracks}
-            onRemove={handleRemoveTrack}
-            emptyMessage={t('lists.emptyMustHave')}
-            color="green"
+            priority="must_have"
+            onRemoveTrack={handleRemoveTrack}
           />
 
           <TrackList
             title={t('lists.normal')}
             tracks={normalTracks}
-            onRemove={handleRemoveTrack}
-            emptyMessage={t('lists.emptyNormal')}
-            color="blue"
+            priority="normal"
+            onRemoveTrack={handleRemoveTrack}
           />
 
           <TrackList
             title={t('lists.blacklist')}
             tracks={blacklistTracks}
-            onRemove={handleRemoveTrack}
-            emptyMessage={t('lists.emptyBlacklist')}
-            color="red"
+            priority="blacklist"
+            onRemoveTrack={handleRemoveTrack}
           />
         </div>
       </div>
