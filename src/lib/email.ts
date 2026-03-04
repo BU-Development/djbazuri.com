@@ -1,36 +1,32 @@
-// Email helper via Brevo API (geen SMTP nodig)
-// Stel BREVO_API_KEY en BREVO_FROM_EMAIL in als environment variabelen
-
-const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+// Email helper via Resend API (geen SMTP nodig)
+// Stel RESEND_API_KEY in als environment variabele
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  const apiKey = process.env.BREVO_API_KEY;
-  const fromEmail = process.env.BREVO_FROM_EMAIL || 'noreply@djbazuri.com';
-  const fromName = process.env.BREVO_FROM_NAME || 'DJ Bazuri';
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'DJ Bazuri <noreply@djbazuri.com>';
 
   if (!apiKey) {
-    console.warn('BREVO_API_KEY niet ingesteld, email niet verstuurd');
+    console.warn('RESEND_API_KEY niet ingesteld, email niet verstuurd');
     return;
   }
 
-  const response = await fetch(BREVO_API_URL, {
+  const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'accept': 'application/json',
-      'api-key': apiKey,
-      'content-type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      sender: { name: fromName, email: fromEmail },
-      to: [{ email: to }],
+      from: fromEmail,
+      to: [to],
       subject,
-      htmlContent: html,
+      html,
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('Brevo email fout:', error);
+    console.error('Resend email fout:', error);
     throw new Error(`Email versturen mislukt: ${response.status}`);
   }
 }
