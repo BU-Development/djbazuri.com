@@ -68,15 +68,13 @@ export default function TrackSearch({ onAddTrack }: TrackSearchProps) {
   };
 
   return (
-    <div className="bg-zinc-900 border border-purple-500/20 rounded-lg shadow-md p-6">
-      <h3 className="text-xl font-bold text-white mb-4">{t('search')}</h3>
-
+    <div>
       <div className="relative mb-4">
         <input
           type="text"
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
-          placeholder={t('search')}
+          placeholder={t('search.title')}
           className="w-full px-4 py-3 bg-black border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-white placeholder-gray-500"
         />
         {loading && (

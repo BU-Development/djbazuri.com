@@ -43,7 +43,7 @@ function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: str
       const bookingRes = await fetch(`/api/admin/bookings?id=${bookingId}`);
       if (bookingRes.ok) {
         const bookingData = await bookingRes.json();
-        const booking = bookingData[0];
+        const booking = bookingData.data?.[0];
         if (booking) {
           setEventName(booking.event_name);
           setEventDate(booking.event_date);
