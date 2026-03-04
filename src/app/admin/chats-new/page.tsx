@@ -198,7 +198,7 @@ export default function AdminChatsPage() {
                         <h3 className="font-semibold text-white truncate">
                           {booking.event_name}
                         </h3>
-                        {booking.unreadCount > 0 && (
+                        {(booking.unreadCount ?? 0) > 0 && (
                           <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-purple-600 rounded-full">
                             {booking.unreadCount}
                           </span>
@@ -214,7 +214,7 @@ export default function AdminChatsPage() {
                       )}
                     </div>
                     <p className="text-sm text-gray-400 mb-1">{booking.client_email}</p>
-                    <p className={`text-sm truncate ${booking.unreadCount > 0 ? 'text-white font-medium' : 'text-gray-500'}`}>
+                    <p className={`text-sm truncate ${(booking.unreadCount ?? 0) > 0 ? 'text-white font-medium' : 'text-gray-500'}`}>
                       {booking.lastMessage}
                     </p>
                   </button>
