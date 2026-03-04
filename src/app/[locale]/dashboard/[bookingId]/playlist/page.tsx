@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import TrackSearch from '@/components/TrackSearch';
 import TrackList from '@/components/TrackList';
 
@@ -26,6 +26,8 @@ type Params = {
 function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: string }) {
   const t = useTranslations('dashboard.playlist');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const backToken = searchParams.get('token');
   const [tracks, setTracks] = useState<Track[]>([]);
   const [playlistId, setPlaylistId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -186,12 +188,21 @@ function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: str
     <div className="min-h-screen bg-black py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-purple-400 hover:text-purple-300 mb-4 inline-block"
-          >
-            ← {t('backToDashboard')}
-          </button>
+          {backToken ? (
+            <a
+              href={`/toegang/${backToken}`}
+              className="text-purple-400 hover:text-purple-300 mb-4 inline-block"
+            >
+              ← {t('backToDashboard')}
+            </a>
+          ) : (
+            <button
+              onClick={() => router.back()}
+              className="text-purple-400 hover:text-purple-300 mb-4 inline-block"
+            >
+              ← {t('backToDashboard')}
+            </button>
+          )}
           <h1 className="text-4xl font-bold text-white mb-2">{t('title')}</h1>
           <p className="text-xl text-gray-400">
             {eventName}{eventDate ? ` - ${new Date(eventDate).toLocaleDateString('nl-NL')}` : ''}

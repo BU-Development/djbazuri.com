@@ -167,7 +167,7 @@ export default function ToegangsPage() {
             niet hoort.
           </p>
           <a
-            href={`/nl/dashboard/${booking.id}/playlist`}
+            href={`/nl/dashboard/${booking.id}/playlist?token=${token}`}
             className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
           >
             Playlist beheren
