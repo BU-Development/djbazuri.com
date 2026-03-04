@@ -99,7 +99,7 @@ export async function sendChatNotificationEmail(
 }
 
 export async function sendStatusUpdateEmail(
-  clientEmail: string,
+  logEmail: string,
   clientName: string,
   accessToken: string,
   eventName: string,
@@ -118,20 +118,15 @@ export async function sendStatusUpdateEmail(
   const statusLabel = statusLabels[newStatus] || newStatus;
 
   await sendEmail(
-    clientEmail,
-    `Je boeking status is bijgewerkt - DJ Bazuri`,
+    logEmail,
+    `[LOG] Boeking status gewijzigd: ${eventName} → ${statusLabel}`,
     `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 32px; border-radius: 12px;">
-      <h1 style="color: #a855f7; margin-bottom: 8px;">DJ Bazuri</h1>
-      <h2 style="color: #fff; margin-bottom: 24px;">Status bijgewerkt</h2>
-      <p style="color: #ccc;">Hoi ${name},</p>
-      <p style="color: #ccc;">De status van je boeking voor <strong style="color: #fff;">${eventName}</strong> is bijgewerkt naar:</p>
-      <p style="color: #a855f7; font-size: 20px; font-weight: bold; text-align: center; margin: 24px 0;">${statusLabel}</p>
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="${link}" style="background: #9333ea; color: #fff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
-          Naar mijn dashboard
-        </a>
-      </div>
+      <h1 style="color: #a855f7; margin-bottom: 8px;">DJ Bazuri – Status Log</h1>
+      <p style="color: #ccc;"><strong style="color: #fff;">Klant:</strong> ${name}</p>
+      <p style="color: #ccc;"><strong style="color: #fff;">Event:</strong> ${eventName}</p>
+      <p style="color: #ccc;"><strong style="color: #fff;">Nieuwe status:</strong> <span style="color: #a855f7;">${statusLabel}</span></p>
+      <p style="color: #666; font-size: 14px;"><a href="${link}" style="color: #a855f7;">Klantlink: ${link}</a></p>
       <hr style="border-color: #333; margin: 24px 0;">
       <p style="color: #666; font-size: 12px;">DJ Bazuri | djbazuri.com</p>
     </div>

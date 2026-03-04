@@ -111,17 +111,16 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Stuur email als de status is gewijzigd en er een email adres is
+    // Stuur log-email als de status is gewijzigd
     if (
       currentBooking &&
       updateData.status &&
       updateData.status !== currentBooking.status &&
-      currentBooking.client_email &&
       currentBooking.access_token
     ) {
       try {
         await sendStatusUpdateEmail(
-          currentBooking.client_email,
+          'logs@djbazuri.com',
           currentBooking.client_name || '',
           currentBooking.access_token,
           currentBooking.event_name,
