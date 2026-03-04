@@ -23,7 +23,7 @@ function PrivacyNL({ locale }: { locale: string }) {
           <div>
             <h2 className="text-2xl font-semibold text-white mb-3">1. Wie zijn wij?</h2>
             <p>
-              DJ Bazuri is een eenmanszaak die zich richt op professionele DJ-diensten voor evenementen.
+              DJ Bazuri is een professionele DJ-dienst voor evenementen.
               Deze website (<strong className="text-white">djbazuri.com</strong>) is volledig open source en
               de broncode is openbaar beschikbaar op GitHub.
             </p>
@@ -154,7 +154,7 @@ function PrivacyEN({ locale }: { locale: string }) {
           <div>
             <h2 className="text-2xl font-semibold text-white mb-3">1. Who are we?</h2>
             <p>
-              DJ Bazuri is a sole proprietorship providing professional DJ services for events.
+              DJ Bazuri is a professional DJ service for events.
               This website (<strong className="text-white">djbazuri.com</strong>) is fully open source and
               the source code is publicly available on GitHub.
             </p>
