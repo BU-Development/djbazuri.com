@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Navigation from '@/components/Navigation';
+import CookieConsent from '@/components/CookieConsent';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <Navigation />
           <main className="min-h-screen">{children}</main>
+          <CookieConsent />
           <footer className="bg-black border-t border-primary/20 text-white py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <p className="text-gray-400">&copy; {new Date().getFullYear()} DJ Bazuri. All rights reserved.</p>
