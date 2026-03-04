@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { isAdmin } from '@/lib/admin';
+import { sendStatusUpdateEmail } from '@/lib/email';
 
 export async function GET() {
   try {
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
         notes: notes || '',
         client_name: client_name || null,
         client_email: client_email || null,
+        // access_token wordt automatisch gegenereerd door de database DEFAULT
       })
       .select()
       .single();
@@ -83,6 +85,14 @@ export async function PUT(request: NextRequest) {
     }
 
     const supabase = getAdminSupabase();
+
+    // Haal huidige booking op voor email notificatie
+    const { data: currentBooking } = await supabase
+      .from('bookings')
+      .select('status, client_email, client_name, event_name, access_token')
+      .eq('id', id)
+      .single();
+
     const { data, error } = await supabase
       .from('bookings')
       .update(updateData)
@@ -93,6 +103,27 @@ export async function PUT(request: NextRequest) {
     if (error) {
       console.error('Error updating booking:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Stuur email als de status is gewijzigd en er een email adres is
+    if (
+      currentBooking &&
+      updateData.status &&
+      updateData.status !== currentBooking.status &&
+      currentBooking.client_email &&
+      currentBooking.access_token
+    ) {
+      try {
+        await sendStatusUpdateEmail(
+          currentBooking.client_email,
+          currentBooking.client_name || '',
+          currentBooking.access_token,
+          currentBooking.event_name,
+          updateData.status
+        );
+      } catch (emailError) {
+        console.error('Email versturen mislukt (niet kritiek):', emailError);
+      }
     }
 
     return NextResponse.json({ data });

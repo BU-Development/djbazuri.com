@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import AdminNav from '@/components/AdminNav';
 
 type Booking = {
   id: string;
@@ -12,6 +13,7 @@ type Booking = {
   notes: string;
   client_name: string | null;
   client_email: string | null;
+  access_token: string | null;
   created_at: string;
 };
 
@@ -257,14 +259,19 @@ END:VCALENDAR`;
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-black">
+        <AdminNav />
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-black">
+      <AdminNav />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-900/50 border border-red-600/50 rounded-xl text-red-300">
@@ -529,6 +536,26 @@ END:VCALENDAR`;
                         {generatingFor === booking.id ? 'Bezig...' : '🔑 Maak Account'}
                       </button>
                     )}
+                    {booking.access_token && (
+                      <button
+                        onClick={() => {
+                          const link = `${window.location.origin}/toegang/${booking.access_token}`;
+                          copyToClipboard(link);
+                          alert('Link gekopieerd naar klembord!');
+                        }}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-sm"
+                      >
+                        🔗 Kopieer Link
+                      </button>
+                    )}
+                    <a
+                      href={`/nl/dashboard/${booking.id}/playlist`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg transition-colors text-center text-sm"
+                    >
+                      🎵 Bekijk Playlist
+                    </a>
                     <a
                       href={generateCalendarUrl(booking)}
                       target="_blank"
@@ -606,6 +633,7 @@ END:VCALENDAR`;
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

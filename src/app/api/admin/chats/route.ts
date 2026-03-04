@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { isAdmin, getCurrentUser } from '@/lib/admin';
+import { sendChatNotificationEmail } from '@/lib/email';
 
 export async function GET() {
   try {
@@ -100,6 +101,26 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error creating chat:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Stuur email notificatie naar klant
+    try {
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('client_email, client_name, event_name, access_token')
+        .eq('id', booking_id)
+        .single();
+
+      if (booking?.client_email && booking?.access_token) {
+        await sendChatNotificationEmail(
+          booking.client_email,
+          booking.client_name || '',
+          booking.access_token,
+          booking.event_name
+        );
+      }
+    } catch (emailError) {
+      console.error('Email versturen mislukt (niet kritiek):', emailError);
     }
 
     return NextResponse.json({ data });
