@@ -50,12 +50,16 @@ export async function GET(request: NextRequest) {
         .select()
         .single();
 
-      if (createError) {
+      if (createError || !newPlaylist) {
         console.error('Error creating playlist:', createError);
         return NextResponse.json({ error: 'Could not create playlist' }, { status: 500 });
       }
 
       playlist = newPlaylist;
+    }
+
+    if (!playlist) {
+      return NextResponse.json({ error: 'Could not get playlist' }, { status: 500 });
     }
 
     // Load tracks
@@ -72,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       playlistId: playlist.id,
-      spotifyPlaylistId: playlist.spotify_playlist_id,
+      spotifyPlaylistId: (playlist as any).spotify_playlist_id,
       tracks: tracks || [],
     });
   } catch (error) {
@@ -125,6 +129,10 @@ export async function POST(request: NextRequest) {
       }
 
       playlist = newPlaylist;
+    }
+
+    if (!playlist) {
+      return NextResponse.json({ error: 'Could not get playlist' }, { status: 500 });
     }
 
     const playlistId = playlist.id;
