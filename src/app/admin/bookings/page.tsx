@@ -22,12 +22,7 @@ export default function AdminBookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
-  const [generatedCredentials, setGeneratedCredentials] = useState<{
-    email: string;
-    password: string;
-    bookingId: string;
-  } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [newBooking, setNewBooking] = useState({
     event_name: '',
     event_date: '',
@@ -135,55 +130,12 @@ export default function AdminBookingsPage() {
     }
   }
 
-  function generatePassword(length = 12) {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let password = '';
-    for (let i = 0; i < length; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  }
-
-  async function handleGenerateCredentials(booking: Booking) {
-    if (!booking.client_email) {
-      alert('Vul eerst een email adres in voor de klant');
-      return;
-    }
-
-    setGeneratingFor(booking.id);
-
-    const password = generatePassword();
-
-    try {
-      const response = await fetch('/api/admin/create-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: booking.client_email,
-          password,
-          bookingId: booking.id,
-          eventName: booking.event_name,
-          clientName: booking.client_name,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setGeneratedCredentials({
-          email: booking.client_email,
-          password,
-          bookingId: booking.id,
-        });
-        loadBookings();
-      } else {
-        alert(`Fout bij aanmaken account: ${data.error}`);
-      }
-    } catch (error) {
-      alert('Er is iets misgegaan bij het aanmaken van het account');
-    } finally {
-      setGeneratingFor(null);
-    }
+  function handleCopyLink(booking: Booking) {
+    if (!booking.access_token) return;
+    const link = `${window.location.origin}/toegang/${booking.access_token}`;
+    navigator.clipboard.writeText(link);
+    setCopiedId(booking.id);
+    setTimeout(() => setCopiedId(null), 2000);
   }
 
   async function handleUpdateClientInfo(bookingId: string, field: string, value: string) {
@@ -288,75 +240,6 @@ END:VCALENDAR`;
           {showForm ? 'Annuleren' : '+ Nieuwe Boeking'}
         </button>
       </div>
-
-      {/* Generated Credentials Modal */}
-      {generatedCredentials && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-purple-500/30 rounded-xl p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold text-green-400 mb-4">Account Aangemaakt!</h2>
-            <p className="text-gray-300 mb-4">
-              Stuur deze gegevens naar de klant zodat ze kunnen inloggen:
-            </p>
-
-            <div className="space-y-3 bg-black rounded-lg p-4 mb-4">
-              <div>
-                <label className="text-xs text-gray-500">Email</label>
-                <div className="flex items-center gap-2">
-                  <code className="text-purple-400 flex-1">{generatedCredentials.email}</code>
-                  <button
-                    onClick={() => copyToClipboard(generatedCredentials.email)}
-                    className="px-2 py-1 bg-purple-600 rounded text-xs hover:bg-purple-700"
-                  >
-                    Kopieer
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Wachtwoord</label>
-                <div className="flex items-center gap-2">
-                  <code className="text-purple-400 flex-1">{generatedCredentials.password}</code>
-                  <button
-                    onClick={() => copyToClipboard(generatedCredentials.password)}
-                    className="px-2 py-1 bg-purple-600 rounded text-xs hover:bg-purple-700"
-                  >
-                    Kopieer
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Login URL</label>
-                <div className="flex items-center gap-2">
-                  <code className="text-purple-400 flex-1 text-sm">https://djbazuri.com/nl/auth/signin</code>
-                  <button
-                    onClick={() => copyToClipboard('https://djbazuri.com/nl/auth/signin')}
-                    className="px-2 py-1 bg-purple-600 rounded text-xs hover:bg-purple-700"
-                  >
-                    Kopieer
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                const text = `Hoi!\n\nHierbij je inloggegevens voor DJ Bazuri:\n\nEmail: ${generatedCredentials.email}\nWachtwoord: ${generatedCredentials.password}\n\nLogin op: https://djbazuri.com/nl/auth/signin\n\nDaar kun je je playlist samenstellen en met mij chatten over je event!\n\nGroetjes,\nDJ Bazuri`;
-                copyToClipboard(text);
-                alert('Volledige bericht gekopieerd!');
-              }}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg mb-3"
-            >
-              Kopieer Volledig Bericht
-            </button>
-
-            <button
-              onClick={() => setGeneratedCredentials(null)}
-              className="w-full px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg"
-            >
-              Sluiten
-            </button>
-          </div>
-        </div>
-      )}
 
       {showForm && (
         <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-6 mb-8">
@@ -497,10 +380,10 @@ END:VCALENDAR`;
                     </div>
 
                     {/* Client info editing */}
-                    {!booking.user_id && (
+                    {(!booking.client_name || !booking.client_email) && (
                       <div className="mt-4 p-4 bg-black/50 rounded-lg">
                         <p className="text-sm text-yellow-400 mb-3">
-                          Vul klantgegevens in om een account aan te maken:
+                          Vul klantgegevens in:
                         </p>
                         <div className="grid md:grid-cols-2 gap-3">
                           <input
@@ -527,27 +410,13 @@ END:VCALENDAR`;
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    {!booking.user_id && (
-                      <button
-                        onClick={() => handleGenerateCredentials(booking)}
-                        disabled={generatingFor === booking.id || !booking.client_email}
-                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {generatingFor === booking.id ? 'Bezig...' : '🔑 Maak Account'}
-                      </button>
-                    )}
-                    {booking.access_token && (
-                      <button
-                        onClick={() => {
-                          const link = `${window.location.origin}/toegang/${booking.access_token}`;
-                          copyToClipboard(link);
-                          alert('Link gekopieerd naar klembord!');
-                        }}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-sm"
-                      >
-                        🔗 Kopieer Link
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleCopyLink(booking)}
+                      disabled={!booking.access_token}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {copiedId === booking.id ? '✓ Gekopieerd!' : '🔗 Kopieer Klantlink'}
+                    </button>
                     <a
                       href={`/nl/dashboard/${booking.id}/playlist`}
                       target="_blank"
