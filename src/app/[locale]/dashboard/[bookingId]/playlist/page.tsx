@@ -194,7 +194,7 @@ function PlaylistContent({ locale, bookingId }: { locale: string; bookingId: str
           </button>
           <h1 className="text-4xl font-bold text-white mb-2">{t('title')}</h1>
           <p className="text-xl text-gray-400">
-            {eventName} - {new Date(eventDate).toLocaleDateString('nl-NL')}
+            {eventName}{eventDate ? ` - ${new Date(eventDate).toLocaleDateString('nl-NL')}` : ''}
           </p>
         </div>
 
